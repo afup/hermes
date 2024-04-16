@@ -14,7 +14,7 @@ final readonly class FindEventByChannel
     ) {
     }
 
-    public function __invoke(int $channelId): Event|null
+    public function __invoke(int $channelId): ?Event
     {
         $eventRepository = $this->entityManager->getRepository(Event::class);
 

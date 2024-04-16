@@ -9,19 +9,18 @@ use Afup\Hermes\Entity\Traveler;
 use Afup\Hermes\Enum\Direction;
 use Afup\Hermes\Enum\Traveler as TravelerType;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
-use Afup\Hermes\Repository\Transport\FindUserTransportForEvent;
+use Afup\Hermes\Repository\Transport\UserCanCreateTransport;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
 use Discord\Builders\CommandBuilder;
-use Discord\Builders\Components\ActionRow;
 use Discord\Builders\Components\Option as SelectOption;
-use Discord\Builders\Components\SelectMenu;
 use Discord\Builders\Components\StringSelect;
-use Discord\Builders\Components\TextInput;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
-use Discord\Parts\Interactions\Interaction;
-use Doctrine\ORM\EntityManagerInterface;
 use Discord\Parts\Interactions\Command\Option as CommandOption;
+use Discord\Parts\Interactions\Interaction;
+use Discord\Parts\Interactions\Request\Option;
+use Discord\Parts\User\User as DiscordUser;
+use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class CreateTransportCommand implements CommandInterface
 {
@@ -30,7 +29,7 @@ final readonly class CreateTransportCommand implements CommandInterface
     public function __construct(
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
-        private FindUserTransportForEvent $findUserTransportForEvent,
+        private UserCanCreateTransport $userCanCreateTransport,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -68,33 +67,32 @@ final readonly class CreateTransportCommand implements CommandInterface
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) use ($discord) {
-            $userId = (int) $interaction->user->id;
+            /** @var DiscordUser $discordUser */
+            $discordUser = $interaction->user;
+            $userId = (int) $discordUser->id;
             $user = ($this->findOrCreateUser)($userId);
 
             $channelId = (int) $interaction->channel_id;
             $event = ($this->findEventByChannel)($channelId);
 
-            $transport = ($this->findUserTransportForEvent)($event, $user);
-            if ($transport instanceof Transport) {
-                // @fixme we should allow one transport per user per event per day
-                // possible use-cases:
-                // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
-                // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
-                // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You already have created a transport, you can\'t have more than one transport.'), true);
+            /** @var Option[] $interactionOptions */
+            $interactionOptions = $interaction->data?->options;
+            /** @var int $seats */
+            $seats = $interactionOptions['seats']->value;
+            /** @var string $postalCode */
+            $postalCode = $interactionOptions['postal_code']->value;
+            /** @var string $whenString */
+            $whenString = $interactionOptions['when']->value;
+            $when = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $whenString);
+            if (false === $when) {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':clock1: Date-time passed has invalid format, please use following format: YYYY-MM-DD HH:MM:SS'), true);
+
                 return;
             }
 
-            /** @var int $seats */
-            $seats = $interaction->data->options['seats']->value;
-            /** @var string $postalCode */
-            $postalCode = $interaction->data->options['postal_code']->value;
-            /** @var string $whenString */
-            $whenString = $interaction->data->options['when']->value;
-            $when = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $whenString);
-
             if (null === $event) {
                 $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: No event found for current channel'), true);
+
                 return;
             }
 
@@ -103,9 +101,21 @@ final readonly class CreateTransportCommand implements CommandInterface
                 ->addOption(new SelectOption('To my place', 'home'))
                 ->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
                     /** @var string $directionString */
-                    [$directionString] = $interaction->data->values;
+                    [$directionString] = $interaction->data?->values ?? [Direction::EVENT->value];
+                    /** @var Direction $direction */
+                    $direction = Direction::tryFrom($directionString);
 
-                    $transport = new Transport($event, $seats, $postalCode, Direction::tryFrom($directionString), $when);
+                    if (($this->userCanCreateTransport)($event, $user, $direction)) {
+                        // possible use-cases:
+                        // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
+                        // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
+                        // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
+                        $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You already have created a transport with the same configuration, you can\'t have more than one transport per day and per direction.'), true);
+
+                        return;
+                    }
+
+                    $transport = new Transport($event, $seats, $postalCode, $direction, $when);
                     $traveler = new Traveler($transport, $user, TravelerType::DRIVER);
 
                     $this->entityManager->persist($transport);
