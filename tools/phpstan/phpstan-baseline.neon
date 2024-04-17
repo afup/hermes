@@ -1,0 +1,6 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Unable to resolve the template type T in call to function React\\\\Async\\\\await$#"
+			count: 2
+			path: ../../app/src/Command/RegisterCommand.php

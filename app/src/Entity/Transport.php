@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Afup\Hermes\Entity;
 
 use Afup\Hermes\Enum\Direction;
+use Afup\Hermes\Enum\Traveler as TravelerType;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -44,5 +45,15 @@ class Transport
         public readonly \DateTimeInterface $startAt,
     ) {
         $this->travelers = new ArrayCollection();
+    }
+
+    public function getDriver(): User
+    {
+        /** @var Traveler $driver */
+        $driver = $this->travelers->findFirst(function (int $_, Traveler $traveler) {
+            return TravelerType::DRIVER === $traveler->type;
+        });
+
+        return $driver->user;
     }
 }

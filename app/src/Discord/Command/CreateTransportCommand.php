@@ -105,7 +105,7 @@ final readonly class CreateTransportCommand implements CommandInterface
                     /** @var Direction $direction */
                     $direction = Direction::tryFrom($directionString);
 
-                    if (($this->userCanCreateTransport)($event, $user, $direction)) {
+                    if (!($this->userCanCreateTransport)($event, $user, $direction)) {
                         // possible use-cases:
                         // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
                         // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
