@@ -23,7 +23,7 @@ class Transport
     public int $id;
 
     /** @var Collection<int, Traveler> */
-    #[ORM\OneToMany(targetEntity: Traveler::class, mappedBy: 'transport', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Traveler::class, mappedBy: 'transport', cascade: ['remove'])]
     #[ORM\JoinColumn(nullable: false)]
     public Collection $travelers;
 

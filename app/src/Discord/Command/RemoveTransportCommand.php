@@ -14,6 +14,7 @@ use Discord\Builders\Components\Option as SelectOption;
 use Discord\Builders\Components\StringSelect;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
+use Discord\Parts\Embed\Embed;
 use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Interactions\Interaction;
 use Discord\Parts\User\User as DiscordUser;
@@ -62,6 +63,9 @@ final readonly class RemoveTransportCommand implements CommandInterface
                 return;
             }
 
+            $embed = new Embed($discord);
+            $embed->setTitle(':wastebasket: Are you sure you want to delete your transport ?');
+
             $validation = ActionRow::new()
                 ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Delete')->setListener(function (Interaction $interaction) use ($transport): void {
                     $transportId = $transport->id;
@@ -74,7 +78,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
                     $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: Ignoring removal request.'), true);
                 }, $discord));
 
-            $interaction->respondWithMessage(MessageBuilder::new()->setContent(':wastebasket: Are you sure you want to delete your transport ?')->addComponent($validation), true);
+            $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
         });
     }
 }
