@@ -8,10 +8,13 @@ use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Transport\FindUserTransportForEvent;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
 use Discord\Builders\CommandBuilder;
+use Discord\Builders\Components\ActionRow;
+use Discord\Builders\Components\Button;
 use Discord\Builders\Components\Option as SelectOption;
 use Discord\Builders\Components\StringSelect;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
+use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Interactions\Interaction;
 use Discord\Parts\User\User as DiscordUser;
 use Doctrine\ORM\EntityManagerInterface;
@@ -59,27 +62,19 @@ final readonly class RemoveTransportCommand implements CommandInterface
                 return;
             }
 
-            $action = StringSelect::new()
-                ->addOption(new SelectOption('Yes', 'yes'))
-                ->addOption(new SelectOption('No', 'no'))
-                ->setListener(function (Interaction $interaction) use ($transport): void {
-                    /** @var 'yes'|'no' $answer */
-                    [$answer] = $interaction->data?->values ?? ['yes'];
-
-                    if ('no' === $answer) {
-                        $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: Ignoring removal request.'), true);
-
-                        return;
-                    }
-
+            $validation = ActionRow::new()
+                ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Delete')->setListener(function (Interaction $interaction) use ($transport): void {
                     $transportId = $transport->id;
                     $this->entityManager->remove($transport);
                     $this->entityManager->flush();
 
                     $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf(':wastebasket: Transport #%d was removed.', $transportId)), true);
-                }, $discord);
+                }, $discord))
+                ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel('Cancel')->setListener(function (Interaction $interaction): void {
+                    $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: Ignoring removal request.'), true);
+                }, $discord));
 
-            $interaction->respondWithMessage(MessageBuilder::new()->setContent(':wastebasket: Are you sure you want to delete your transport ?')->addComponent($action), true);
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent(':wastebasket: Are you sure you want to delete your transport ?')->addComponent($validation), true);
         });
     }
 }
