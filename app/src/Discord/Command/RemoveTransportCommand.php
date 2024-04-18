@@ -67,15 +67,15 @@ final readonly class RemoveTransportCommand implements CommandInterface
             $embed->setTitle(':wastebasket: Are you sure you want to delete your transport ?');
 
             $validation = ActionRow::new()
-                ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Delete')->setListener(function (Interaction $interaction) use ($transport): void {
+                ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Delete')->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($transport): void {
                     $transportId = $transport->id;
                     $this->entityManager->remove($transport);
                     $this->entityManager->flush();
 
-                    $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf(':wastebasket: Transport #%d was removed.', $transportId)), true);
+                    $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf('🗑️ Transport #%d was removed.', $transportId)), true);
                 }, $discord))
-                ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel('Cancel')->setListener(function (Interaction $interaction): void {
-                    $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: Ignoring removal request.'), true);
+                ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel('Cancel')->setEmoji('❌')->setListener(function (Interaction $interaction): void {
+                    $interaction->respondWithMessage(MessageBuilder::new()->setContent('❌ Ignoring removal request.'), true);
                 }, $discord));
 
             $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);

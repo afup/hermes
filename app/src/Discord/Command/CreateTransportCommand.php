@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace Afup\Hermes\Discord\Command;
 
+use Afup\Hermes\Entity\Event;
 use Afup\Hermes\Entity\Transport;
 use Afup\Hermes\Entity\Traveler;
+use Afup\Hermes\Entity\User;
 use Afup\Hermes\Enum\Direction;
 use Afup\Hermes\Enum\Traveler as TravelerType;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Transport\UserCanCreateTransport;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
 use Discord\Builders\CommandBuilder;
+use Discord\Builders\Components\ActionRow;
+use Discord\Builders\Components\Button;
 use Discord\Builders\Components\Option as SelectOption;
 use Discord\Builders\Components\StringSelect;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
+use Discord\Parts\Embed\Embed;
+use Discord\Parts\Guild\Emoji;
 use Discord\Parts\Interactions\Command\Option as CommandOption;
 use Discord\Parts\Interactions\Interaction;
 use Discord\Parts\Interactions\Request\Option;
@@ -96,36 +102,40 @@ final readonly class CreateTransportCommand implements CommandInterface
                 return;
             }
 
-            $action = StringSelect::new()
-                ->addOption(new SelectOption('To the event', 'event'))
-                ->addOption(new SelectOption('To my place', 'home'))
-                ->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
-                    /** @var string $directionString */
-                    [$directionString] = $interaction->data?->values ?? [Direction::EVENT->value];
-                    /** @var Direction $direction */
-                    $direction = Direction::tryFrom($directionString);
+            $embed = new Embed($discord);
+            $embed->setTitle(':blue_car: Are you going to the event or coming back to your place ?');
 
-                    if (!($this->userCanCreateTransport)($event, $user, $direction)) {
-                        // possible use-cases:
-                        // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
-                        // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
-                        // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
-                        $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You already have created a transport with the same configuration, you can\'t have more than one transport per day and per direction.'), true);
+            $validation = ActionRow::new()
+                ->addComponent(Button::new(Button::STYLE_PRIMARY)->setLabel('To the event')->setEmoji('🎤')->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
+                    $this->createTransport($interaction, $event, $user, $seats, $postalCode, $when, Direction::EVENT);
+                }, $discord))
+                ->addComponent(Button::new(Button::STYLE_PRIMARY)->setLabel('To my place')->setEmoji('🏠')->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
+                    $this->createTransport($interaction, $event, $user, $seats, $postalCode, $when, Direction::HOME);
+                }, $discord));
 
-                        return;
-                    }
-
-                    $transport = new Transport($event, $seats, $postalCode, $direction, $when);
-                    $traveler = new Traveler($transport, $user, TravelerType::DRIVER);
-
-                    $this->entityManager->persist($transport);
-                    $this->entityManager->persist($traveler);
-                    $this->entityManager->flush();
-
-                    $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf(':white_check_mark: Transport #%d created.', $transport->id)), true);
-                }, $discord);
-
-            $interaction->respondWithMessage(MessageBuilder::new()->setContent(':blue_car: Are you going to the event or coming back to your place ?')->addComponent($action), true);
+            $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
         });
+    }
+
+    private function createTransport(Interaction $interaction, Event $event, User $user, int $seats, string $postalCode, \DateTimeInterface $when, Direction $direction): void
+    {
+        if (!($this->userCanCreateTransport)($event, $user, $direction)) {
+            // possible use-cases:
+            // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
+            // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
+            // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You already have created a transport with the same configuration, you can\'t have more than one transport per day and per direction.'), true);
+
+            return;
+        }
+
+        $transport = new Transport($event, $seats, $postalCode, $direction, $when);
+        $traveler = new Traveler($transport, $user, TravelerType::DRIVER);
+
+        $this->entityManager->persist($transport);
+        $this->entityManager->persist($traveler);
+        $this->entityManager->flush();
+
+        $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf(':white_check_mark: Transport #%d created.', $transport->id)), true);
     }
 }
