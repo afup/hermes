@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Afup\Hermes\Discord\Command;
 
+use Afup\Hermes\Discord\Command\Helper\EventHelper;
+use Afup\Hermes\Discord\Command\Helper\OptionHelper;
+use Afup\Hermes\Discord\Command\Helper\UserHelper;
 use Afup\Hermes\Entity\Event;
 use Afup\Hermes\Entity\Transport;
 use Afup\Hermes\Entity\Traveler;
@@ -21,12 +24,14 @@ use Discord\Discord;
 use Discord\Parts\Embed\Embed;
 use Discord\Parts\Interactions\Command\Option as CommandOption;
 use Discord\Parts\Interactions\Interaction;
-use Discord\Parts\Interactions\Request\Option;
-use Discord\Parts\User\User as DiscordUser;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class CreateTransportCommand implements CommandInterface
 {
+    use EventHelper;
+    use UserHelper;
+    use OptionHelper;
+
     private const COMMAND_NAME = 'create_transport';
 
     public function __construct(
@@ -70,31 +75,25 @@ final readonly class CreateTransportCommand implements CommandInterface
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) use ($discord) {
-            /** @var DiscordUser $discordUser */
-            $discordUser = $interaction->user;
-            $userId = (int) $discordUser->id;
-            $user = ($this->findOrCreateUser)($userId);
-
-            $channelId = (int) $interaction->channel_id;
-            $event = ($this->findEventByChannel)($channelId);
-
-            /** @var Option[] $interactionOptions */
-            $interactionOptions = $interaction->data?->options;
-            /** @var int $seats */
-            $seats = $interactionOptions['seats']->value;
-            /** @var string $postalCode */
-            $postalCode = $interactionOptions['postal_code']->value;
-            /** @var string $whenString */
-            $whenString = $interactionOptions['when']->value;
-            $when = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $whenString);
-            if (false === $when) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':clock1: Date-time passed has invalid format, please use following format: YYYY-MM-DD HH:MM:SS'), true);
-
-                return;
+            if ($interaction->user?->bot ?? false) {
+                return; // ignore bots
             }
 
-            if (null === $event) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: No event found for current channel'), true);
+            if (false === ($event = $this->getEventForInteraction($interaction))) {
+                return;
+            }
+            $user = $this->getUserForInteraction($interaction);
+
+            /** @var int $seats */
+            $seats = $this->getOptionForInteraction($interaction, 'seats');
+            /** @var string $postalCode */
+            $postalCode = $this->getOptionForInteraction($interaction, 'postal_code');
+            /** @var string $whenString */
+            $whenString = $this->getOptionForInteraction($interaction, 'when');
+            $when = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $whenString);
+
+            if (false === $when) {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':clock1: Date-time passed has invalid format, please use following format: YYYY-MM-DD HH:MM:SS'), true);
 
                 return;
             }

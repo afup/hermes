@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Afup\Hermes\Discord\Command;
 
+use Afup\Hermes\Discord\Command\Helper\EventHelper;
+use Afup\Hermes\Discord\Command\Helper\UserHelper;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Transport\FindUserTransportForEvent;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
@@ -14,11 +16,13 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Embed\Embed;
 use Discord\Parts\Interactions\Interaction;
-use Discord\Parts\User\User as DiscordUser;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class RemoveTransportCommand implements CommandInterface
 {
+    use EventHelper;
+    use UserHelper;
+
     private const COMMAND_NAME = 'remove_transport';
 
     public function __construct(
@@ -39,19 +43,14 @@ final readonly class RemoveTransportCommand implements CommandInterface
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) use ($discord) {
-            /** @var DiscordUser $discordUser */
-            $discordUser = $interaction->user;
-            $userId = (int) $discordUser->id;
-            $user = ($this->findOrCreateUser)($userId);
+            if ($interaction->user?->bot ?? false) {
+                return; // ignore bots
+            }
 
-            $channelId = (int) $interaction->channel_id;
-            $event = ($this->findEventByChannel)($channelId);
-
-            if (null === $event) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: No event found for current channel'), true);
-
+            if (false === ($event = $this->getEventForInteraction($interaction))) {
                 return;
             }
+            $user = $this->getUserForInteraction($interaction);
 
             $transport = ($this->findUserTransportForEvent)($event, $user);
             if (null === $transport) {

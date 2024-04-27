@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Afup\Hermes\Discord\Command;
 
+use Afup\Hermes\Discord\Command\Helper\EventHelper;
+use Afup\Hermes\Discord\Command\Helper\UserHelper;
 use Afup\Hermes\Enum\Traveler;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Traveler\GetTravelerListForUserAndEvent;
@@ -12,10 +14,12 @@ use Discord\Builders\CommandBuilder;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Interaction;
-use Discord\Parts\User\User as DiscordUser;
 
 final readonly class StatusCommand implements CommandInterface
 {
+    use EventHelper;
+    use UserHelper;
+
     private const COMMAND_NAME = 'status';
 
     public function __construct(
@@ -35,22 +39,18 @@ final readonly class StatusCommand implements CommandInterface
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) {
-            /** @var DiscordUser $discordUser */
-            $discordUser = $interaction->user;
-            $userId = (int) $discordUser->id;
-            $user = ($this->findOrCreateUser)($userId);
+            if ($interaction->user?->bot ?? false) {
+                return; // ignore bots
+            }
 
-            $channelId = (int) $interaction->channel_id;
-            $event = ($this->findEventByChannel)($channelId);
-
-            if (null === $event) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: No event found for current channel'), true);
-
+            if (false === ($event = $this->getEventForInteraction($interaction))) {
                 return;
             }
+            $user = $this->getUserForInteraction($interaction);
 
             $content = sprintf('Your status for "%s" event:', $event->name) . "\n";
             $travelers = ($this->getTravelerListForUserAndEvent)($user, $event);
+            $hasContent = false;
             foreach ($travelers as $traveler) {
                 $status = sprintf('- [%s] Leaving at %s from %s', $traveler->type->value, $traveler->transport->startAt->format(\DateTimeInterface::ATOM), $traveler->transport->postalCode);
                 if (Traveler::DRIVER !== $traveler->type) {
@@ -58,6 +58,11 @@ final readonly class StatusCommand implements CommandInterface
                 }
 
                 $content .= $status . "\n";
+                $hasContent = true;
+            }
+
+            if (!$hasContent) {
+                $content = sprintf('You have not registered in any transport for "%s" event.', $event->name);
             }
 
             $interaction->respondWithMessage(MessageBuilder::new()->setContent($content), true);

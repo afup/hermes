@@ -10,9 +10,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use PUGX\Shortid\Shortid;
 
 #[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
+#[ORM\UniqueConstraint('short_id_idx', columns: ['short_id'])]
 class Transport
 {
     use CreatedAtTrait;
@@ -21,6 +23,9 @@ class Transport
     #[ORM\GeneratedValue('SEQUENCE')]
     #[ORM\Column(type: Types::INTEGER)]
     public int $id;
+
+    #[ORM\Column(type: Types::STRING)]
+    public string $shortId;
 
     /** @var Collection<int, Traveler> */
     #[ORM\OneToMany(targetEntity: Traveler::class, mappedBy: 'transport', cascade: ['remove'])]
@@ -45,6 +50,7 @@ class Transport
         public readonly \DateTimeInterface $startAt,
     ) {
         $this->travelers = new ArrayCollection();
+        $this->shortId = Shortid::generate(5)->serialize();
     }
 
     public function getDriver(): User
@@ -55,5 +61,10 @@ class Transport
         });
 
         return $driver->user;
+    }
+
+    public function availableSeats(): int
+    {
+        return $this->seats - $this->travelers->count() + 1;
     }
 }
