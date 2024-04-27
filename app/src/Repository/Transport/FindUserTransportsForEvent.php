@@ -9,14 +9,17 @@ use Afup\Hermes\Entity\Transport;
 use Afup\Hermes\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 
-final readonly class FindUserTransportForEvent
+final readonly class FindUserTransportsForEvent
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
     ) {
     }
 
-    public function __invoke(Event $event, User $user): ?Transport
+    /**
+     * @return list<Transport>
+     */
+    public function __invoke(Event $event, User $user): array
     {
         $sql = <<<SQL
 SELECT tp.id
@@ -32,16 +35,16 @@ SQL;
         $statement->bindValue('eventId', $event->id);
         $statement->bindValue('userId', $user->id);
         $result = $statement->executeQuery();
-        /** @var false|int $transportId */
-        $transportId = $result->fetchOne();
+        $transportIds = $result->fetchAllAssociative();
+        $transportIds = array_map(fn (array $result) => $result['id'], $transportIds);
 
-        if (false === $transportId) {
-            return null;
+        if (0 === \count($transportIds)) {
+            return [];
         }
 
-        /** @var Transport $transport */
-        $transport = $this->entityManager->find(Transport::class, $transportId);
+        /** @var list<Transport> $transports */
+        $transports = $this->entityManager->getRepository(Transport::class)->findBy(['id' => $transportIds]);
 
-        return $transport;
+        return $transports;
     }
 }

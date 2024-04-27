@@ -6,8 +6,10 @@ namespace Afup\Hermes\Discord\Command;
 
 use Afup\Hermes\Discord\Command\Helper\EventHelper;
 use Afup\Hermes\Discord\Command\Helper\UserHelper;
+use Afup\Hermes\Entity\Transport;
+use Afup\Hermes\Enum\Direction;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
-use Afup\Hermes\Repository\Transport\FindUserTransportForEvent;
+use Afup\Hermes\Repository\Transport\FindUserTransportsForEvent;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
 use Discord\Builders\CommandBuilder;
 use Discord\Builders\Components\ActionRow;
@@ -28,7 +30,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
     public function __construct(
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
-        private FindUserTransportForEvent $findUserTransportForEvent,
+        private FindUserTransportsForEvent $findUserTransportForEvent,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -52,29 +54,48 @@ final readonly class RemoveTransportCommand implements CommandInterface
             }
             $user = $this->getUserForInteraction($interaction);
 
-            $transport = ($this->findUserTransportForEvent)($event, $user);
-            if (null === $transport) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You have no transport created.'), true);
+            $transports = ($this->findUserTransportForEvent)($event, $user);
+            if (0 === \count($transports)) {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You have no transport(s) created for current channel\'s event.'), true);
 
                 return;
             }
 
-            $embed = new Embed($discord);
-            $embed->setTitle(':wastebasket: Are you sure you want to delete your transport ?');
+            if (1 === \count($transports)) {
+                $this->validateRemoval($discord, $interaction, $transports[0]);
+            } else {
+                $embed = new Embed($discord);
+                $embed->setTitle(':wastebasket: Which transport you wanna remove ?');
 
-            $validation = ActionRow::new()
-                ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Delete')->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($transport): void {
-                    $transportId = $transport->id;
-                    $this->entityManager->remove($transport);
-                    $this->entityManager->flush();
+                $chooseAction = ActionRow::new();
+                foreach ($transports as $transport) {
+                    $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('[%s] %s', Direction::EVENT === $transport->direction ? 'To the event' : 'To my place', $transport->startAt->format(\DateTimeInterface::ATOM)))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
+                        $this->validateRemoval($discord, $interaction, $transport);
+                    }, $discord));
+                }
 
-                    $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf('🗑️ Transport #%d was removed.', $transportId)), true);
-                }, $discord))
-                ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel('Cancel')->setEmoji('❌')->setListener(function (Interaction $interaction): void {
-                    $interaction->respondWithMessage(MessageBuilder::new()->setContent('❌ Ignoring removal request.'), true);
-                }, $discord));
-
-            $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
+                $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($chooseAction), true);
+            }
         });
+    }
+
+    private function validateRemoval(Discord $discord, Interaction $interaction, Transport $transport): void
+    {
+        $embed = new Embed($discord);
+        $embed->setTitle(':wastebasket: Are you sure you want to delete your transport ?');
+
+        $validation = ActionRow::new()
+            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Delete')->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($transport): void {
+                $transportId = $transport->id;
+                $this->entityManager->remove($transport);
+                $this->entityManager->flush();
+
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf('🗑️ Transport #%d was removed.', $transportId)), true);
+            }, $discord))
+            ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel('Cancel')->setEmoji('❌')->setListener(function (Interaction $interaction): void {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent('❌ Ignoring removal request.'), true);
+            }, $discord));
+
+        $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
     }
 }
