@@ -63,6 +63,18 @@ class Transport
         return $driver->user;
     }
 
+    /**
+     * @return \Generator<Traveler>
+     */
+    public function getPassengers(): \Generator
+    {
+        foreach ($this->travelers as $traveler) {
+            if (TravelerType::PASSENGER === $traveler->type) {
+                yield $traveler;
+            }
+        }
+    }
+
     public function availableSeats(): int
     {
         return $this->seats - $this->travelers->count() + 1;
