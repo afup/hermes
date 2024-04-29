@@ -68,15 +68,23 @@ final readonly class LeaveTransportCommand implements CommandInterface
             } else {
                 $embed = new Embed($discord);
                 $embed->setTitle(':wastebasket: Which travel you wanna leave ?');
+                $message = MessageBuilder::new()->addEmbed($embed);
 
-                $chooseAction = ActionRow::new();
-                foreach ($travelers as $traveler) {
-                    $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('[%s] %s', Direction::EVENT === $traveler->transport->direction ? 'To the event' : 'To my place', $traveler->transport->startAt->format(\DateTimeInterface::ATOM)))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $traveler): void {
-                        $this->validateRemoval($discord, $interaction, $traveler);
-                    }, $discord));
+                /** @var array<array<Traveler>> $chunkedTravelers */
+                $chunkedTravelers = array_chunk($travelers, 5);
+                foreach ($chunkedTravelers as $travelerRow) {
+                    $chooseAction = ActionRow::new();
+
+                    foreach ($travelerRow as $traveler) {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('[%s] %s', Direction::EVENT === $traveler->transport->direction ? 'To the event' : 'To my place', $traveler->transport->startAt->format(\DateTimeInterface::ATOM)))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $traveler): void {
+                            $this->validateRemoval($discord, $interaction, $traveler);
+                        }, $discord));
+                    }
+
+                    $message->addComponent($chooseAction);
                 }
 
-                $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($chooseAction), true);
+                $interaction->respondWithMessage($message, true);
             }
         });
     }

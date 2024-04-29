@@ -66,15 +66,23 @@ final readonly class RemoveTransportCommand implements CommandInterface
             } else {
                 $embed = new Embed($discord);
                 $embed->setTitle(':wastebasket: Which transport you wanna remove ?');
+                $message = MessageBuilder::new()->addEmbed($embed);
 
-                $chooseAction = ActionRow::new();
-                foreach ($transports as $transport) {
-                    $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('[%s] %s', Direction::EVENT === $transport->direction ? 'To the event' : 'To my place', $transport->startAt->format(\DateTimeInterface::ATOM)))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
-                        $this->validateRemoval($discord, $interaction, $transport);
-                    }, $discord));
+                /** @var array<array<Transport>> $chunkedTransports */
+                $chunkedTransports = array_chunk($transports, 5);
+                foreach ($chunkedTransports as $transportRow) {
+                    $chooseAction = ActionRow::new();
+
+                    foreach ($transportRow as $transport) {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('[%s] %s', Direction::EVENT === $transport->direction ? 'To the event' : 'To my place', $transport->startAt->format(\DateTimeInterface::ATOM)))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
+                            $this->validateRemoval($discord, $interaction, $transport);
+                        }, $discord));
+                    }
+
+                    $message->addComponent($chooseAction);
                 }
 
-                $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($chooseAction), true);
+                $interaction->respondWithMessage($message, true);
             }
         });
     }
