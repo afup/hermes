@@ -18,6 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsCommand(
     name: 'hermes:register',
@@ -30,6 +31,7 @@ final class RegisterCommand extends Command
         #[TaggedIterator(CommandInterface::class)]
         private readonly iterable $commands,
         private readonly Discord $discord,
+        private readonly TranslatorInterface $translator,
     ) {
         parent::__construct();
     }
@@ -43,27 +45,27 @@ final class RegisterCommand extends Command
                 ->findAllCommands($discord)
                 ->then(function (array $commands) use ($discord, $io) {
                     if (0 === \count($commands)) {
-                        $io->info('No slash command to clean.');
+                        $io->info($this->translator->trans('command.register.error.no_slash_commands'));
 
                         return;
                     }
 
-                    $io->title(sprintf('Found %d slash commands to clean ...', \count($commands)));
+                    $io->title($this->translator->trans('command.register.to_clean', ['commands' => \count($commands)]));
                     foreach ($commands as $command) {
-                        $io->note(sprintf('Deleting slash command: /%s [%d]', $command->name, $command->id));
+                        $io->note($this->translator->trans('command.register.cleaning', ['command' => $command->name, 'id' => $command->id]));
                         await($discord->application->commands->delete($command->id));
                     }
                 })
                 ->then(function () use ($discord, $io) {
-                    $io->title(sprintf('Found %d slash commands to register ...', \count(iterator_to_array($this->commands))));
+                    $io->note($this->translator->trans('command.register.to_register', ['commands' => \count(iterator_to_array($this->commands))]));
                     foreach ($this->commands as $command) {
                         $configuredCommand = $command->configure($discord)->toArray();
-                        $io->note(sprintf('Registering slash command: /%s', $configuredCommand['name']));
+                        $io->note($this->translator->trans('command.register.register', ['command' => $configuredCommand['name']]));
                         await($discord->application->commands->save($discord->application->commands->create($configuredCommand)));
                     }
                 })
                 ->then(function () use ($discord, $io) {
-                    $io->success('Slash commands were successfully registered ! ✅');
+                    $io->success($this->translator->trans('command.register.success'));
                     $discord->close();
                 });
         });

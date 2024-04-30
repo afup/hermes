@@ -21,6 +21,7 @@ use Discord\Discord;
 use Discord\Parts\Embed\Embed;
 use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class DropTravelerFromTransportCommand implements CommandInterface
 {
@@ -31,6 +32,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
     private const COMMAND_NAME = 'drop_traveler_from_transport';
 
     public function __construct(
+        private TranslatorInterface $translator,
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
         private FindUserTransportsForEvent $findUserTransportForEvent,
@@ -42,7 +44,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
     {
         return CommandBuilder::new()
             ->setName(self::COMMAND_NAME)
-            ->setDescription('Drop a traveler from one of your transport');
+            ->setDescription($this->translator->trans('discord.drop_traveler_from_transport.description'));
     }
 
     public function callback(Discord $discord): void
@@ -59,7 +61,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
 
             $transports = ($this->findUserTransportForEvent)($event, $user);
             if (0 === \count($transports)) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You have no transport(s) created for current channel\'s event.'), true);
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.error.no_transport')), true);
 
                 return;
             }
@@ -68,7 +70,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
                 $this->chooseTravelerToDrop($discord, $interaction, $transports[0]);
             } else {
                 $embed = new Embed($discord);
-                $embed->setTitle(':wastebasket: From which transport you wanna drop a traveler ?');
+                $embed->setTitle($this->translator->trans('discord.drop_traveler_from_transport.ask_transport'));
                 $message = MessageBuilder::new()->addEmbed($embed);
 
                 $chunkedTransports = array_chunk($transports, 5);
@@ -76,7 +78,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
                     $chooseAction = ActionRow::new();
 
                     foreach ($transportRow as $transport) {
-                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('[%s] %s', Direction::EVENT === $transport->direction ? 'To the event' : 'To my place', $transport->startAt->format(\DateTimeInterface::ATOM)))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.transport_button', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $transport->startAt->format(\DateTimeInterface::ATOM)]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
                             $this->chooseTravelerToDrop($discord, $interaction, $transport);
                         }, $discord));
                     }
@@ -92,7 +94,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
     private function chooseTravelerToDrop(Discord $discord, Interaction $interaction, Transport $transport): void
     {
         $embed = new Embed($discord);
-        $embed->setTitle(':wastebasket: Which traveler you wanna drop from this transport ?');
+        $embed->setTitle($this->translator->trans('discord.drop_traveler_from_transport.ask_traveler'));
         $message = MessageBuilder::new()->addEmbed($embed);
 
         /** @var array<array<Traveler>> $chunkedTravelers */
@@ -101,7 +103,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
             $chooseAction = ActionRow::new();
 
             foreach ($travelerRow as $traveler) {
-                $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('<@%s>', $traveler->user->userId))->setEmoji('👤')->setListener(function (Interaction $interaction) use ($discord, $traveler): void {
+                $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.traveler_button', ['traveler_id' => $traveler->user->userId]))->setEmoji('👤')->setListener(function (Interaction $interaction) use ($discord, $traveler): void {
                     $this->validateTravelerToDrop($discord, $interaction, $traveler);
                 }, $discord));
             }
@@ -115,17 +117,18 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
     private function validateTravelerToDrop(Discord $discord, Interaction $interaction, Traveler $traveler): void
     {
         $embed = new Embed($discord);
-        $embed->setTitle(sprintf(':wastebasket: Are you sure you want to drop this traveler: <@%s> ?', $traveler->user->userId));
+        $embed->setTitle($this->translator->trans('discord.drop_traveler_from_transport.confirmation', ['traveler_id' => $traveler->user->userId]));
 
         $validation = ActionRow::new()
-            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Drop this traveler')->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($traveler): void {
+            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.confirm_button'))->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($traveler): void {
                 $this->entityManager->remove($traveler);
                 $this->entityManager->flush();
 
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent('🗑️ Traveler was dropped.'), true);
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.confirm_label')), true);
+                // @fixme send a notification to the traveler that he was dropped
             }, $discord))
-            ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel('Cancel')->setEmoji('❌')->setListener(function (Interaction $interaction): void {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent('❌ Ignoring removal request.'), true);
+            ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.cancel_button'))->setEmoji('❌')->setListener(function (Interaction $interaction): void {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.cancel_label')), true);
             }, $discord));
 
         $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);

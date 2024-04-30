@@ -14,6 +14,7 @@ use Discord\Builders\CommandBuilder;
 use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Interactions\Interaction;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class StatusCommand implements CommandInterface
 {
@@ -23,6 +24,7 @@ final readonly class StatusCommand implements CommandInterface
     private const COMMAND_NAME = 'status';
 
     public function __construct(
+        private TranslatorInterface $translator,
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
         private GetTravelerListForUserAndEvent $getTravelerListForUserAndEvent,
@@ -33,13 +35,13 @@ final readonly class StatusCommand implements CommandInterface
     {
         return CommandBuilder::new()
             ->setName(self::COMMAND_NAME)
-            ->setDescription('Your current status within the current channel event');
+            ->setDescription($this->translator->trans('discord.status.description'));
     }
 
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) {
-            if ($interaction->user?->bot ?? false) {
+            if (null === $interaction->user || $interaction->user->bot) {
                 return; // ignore bots
             }
 
@@ -48,13 +50,13 @@ final readonly class StatusCommand implements CommandInterface
             }
             $user = $this->getUserForInteraction($interaction);
 
-            $content = sprintf('Your status for "%s" event:', $event->name) . "\n";
+            $content = $this->translator->trans('discord.status.intro', ['name' => $event->name]) . "\n";
             $travelers = ($this->getTravelerListForUserAndEvent)($user, $event);
             $hasContent = false;
             foreach ($travelers as $traveler) {
-                $status = sprintf('- [%s] Leaving at %s from %s', $traveler->type->value, $traveler->transport->startAt->format(\DateTimeInterface::ATOM), $traveler->transport->postalCode);
+                $status = $this->translator->trans('discord.status.row', ['traveler_type' => $traveler->type->value, 'date' => $traveler->transport->startAt->format(\DateTimeInterface::ATOM), 'postal_code' => $traveler->transport->postalCode]);
                 if (Traveler::DRIVER !== $traveler->type) {
-                    $status .= sprintf(' (created by <@%d>)', $traveler->transport->getDriver()->userId);
+                    $status .= $this->translator->trans('discord.status.row_not_driver', ['driver_id' => $traveler->transport->getDriver()->userId]);
                 }
 
                 $content .= $status . "\n";
@@ -62,7 +64,7 @@ final readonly class StatusCommand implements CommandInterface
             }
 
             if (!$hasContent) {
-                $content = sprintf('You have not registered in any transport for "%s" event.', $event->name);
+                $content = $this->translator->trans('discord.status.empty', ['name' => $event->name]);
             }
 
             $interaction->respondWithMessage(MessageBuilder::new()->setContent($content), true);

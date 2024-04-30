@@ -25,6 +25,7 @@ use Discord\Parts\Embed\Embed;
 use Discord\Parts\Interactions\Command\Option as CommandOption;
 use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class CreateTransportCommand implements CommandInterface
 {
@@ -35,6 +36,7 @@ final readonly class CreateTransportCommand implements CommandInterface
     private const COMMAND_NAME = 'create_transport';
 
     public function __construct(
+        private TranslatorInterface $translator,
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
         private UserCanCreateTransport $userCanCreateTransport,
@@ -46,25 +48,25 @@ final readonly class CreateTransportCommand implements CommandInterface
     {
         return CommandBuilder::new()
             ->setName(self::COMMAND_NAME)
-            ->setDescription('Create a new transport for the event')
+            ->setDescription($this->translator->trans('discord.create_transport.description'))
             ->addOption(
                 (new CommandOption($discord))
                     ->setName('seats')
-                    ->setDescription('Number of seats available for other travelers')
+                    ->setDescription($this->translator->trans('discord.create_transport.option.seats'))
                     ->setType(CommandOption::INTEGER)
                     ->setRequired(true)
             )
             ->addOption(
                 (new CommandOption($discord))
                     ->setName('postal_code')
-                    ->setDescription('Postal code you\'re coming from or you\'re going to')
+                    ->setDescription($this->translator->trans('discord.create_transport.option.postal_code'))
                     ->setType(CommandOption::STRING)
                     ->setRequired(true)
             )
             ->addOption(
                 (new CommandOption($discord))
                     ->setName('when')
-                    ->setDescription('When you are starting your trip (format: YYYY-MM-DD HH:MM:SS)')
+                    ->setDescription($this->translator->trans('discord.create_transport.option.when'))
                     ->setType(CommandOption::STRING)
                     ->setMinLength(19)
                     ->setMaxLength(19)
@@ -75,7 +77,7 @@ final readonly class CreateTransportCommand implements CommandInterface
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) use ($discord) {
-            if ($interaction->user?->bot ?? false) {
+            if (null === $interaction->user || $interaction->user->bot) {
                 return; // ignore bots
             }
 
@@ -93,19 +95,19 @@ final readonly class CreateTransportCommand implements CommandInterface
             $when = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $whenString);
 
             if (false === $when) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':clock1: Date-time passed has invalid format, please use following format: YYYY-MM-DD HH:MM:SS'), true);
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.invalid_date')), true);
 
                 return;
             }
 
             $embed = new Embed($discord);
-            $embed->setTitle(':blue_car: Are you going to the event or coming back to your place ?');
+            $embed->setTitle($this->translator->trans('discord.create_transport.ask_direction'));
 
             $validation = ActionRow::new()
-                ->addComponent(Button::new(Button::STYLE_PRIMARY)->setLabel('To the event')->setEmoji('🎤')->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
+                ->addComponent(Button::new(Button::STYLE_PRIMARY)->setLabel($this->translator->trans('enum.event'))->setEmoji('🎤')->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
                     $this->createTransport($interaction, $event, $user, $seats, $postalCode, $when, Direction::EVENT);
                 }, $discord))
-                ->addComponent(Button::new(Button::STYLE_PRIMARY)->setLabel('To my place')->setEmoji('🏠')->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
+                ->addComponent(Button::new(Button::STYLE_PRIMARY)->setLabel($this->translator->trans('enum.home'))->setEmoji('🏠')->setListener(function (Interaction $interaction) use ($event, $user, $seats, $postalCode, $when): void {
                     $this->createTransport($interaction, $event, $user, $seats, $postalCode, $when, Direction::HOME);
                 }, $discord));
 
@@ -120,7 +122,7 @@ final readonly class CreateTransportCommand implements CommandInterface
             // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
             // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
             // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
-            $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You already have created a transport with the same configuration, you can\'t have more than one transport per day and per direction.'), true);
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.same_configuration')), true);
 
             return;
         }
@@ -132,6 +134,6 @@ final readonly class CreateTransportCommand implements CommandInterface
         $this->entityManager->persist($traveler);
         $this->entityManager->flush();
 
-        $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf(':white_check_mark: Transport #%d created.', $transport->id)), true);
+        $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.created', ['transport_id' => $transport->shortId])), true);
     }
 }

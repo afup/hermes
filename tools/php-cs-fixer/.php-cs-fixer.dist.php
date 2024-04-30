@@ -40,6 +40,7 @@ return (new PhpCsFixer\Config())
     ->setFinder(
         (new PhpCsFixer\Finder())
             ->in(sprintf('%s/../../app/src', __DIR__))
+            ->in(sprintf('%s/../../app/translations', __DIR__))
             ->in(sprintf('%s/../../app/tests', __DIR__))
     )
     ->setCacheFile('.php-cs-fixer.cache')

@@ -15,6 +15,7 @@ use Discord\Discord;
 use Discord\Parts\Interactions\Command\Choice;
 use Discord\Parts\Interactions\Command\Option as CommandOption;
 use Discord\Parts\Interactions\Interaction;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class SearchCommand implements CommandInterface
 {
@@ -24,6 +25,7 @@ final readonly class SearchCommand implements CommandInterface
     private const COMMAND_NAME = 'search';
 
     public function __construct(
+        private TranslatorInterface $translator,
         private FindEventByChannel $findEventByChannel,
         private SearchTransport $searchTransport,
     ) {
@@ -33,21 +35,21 @@ final readonly class SearchCommand implements CommandInterface
     {
         return CommandBuilder::new()
             ->setName(self::COMMAND_NAME)
-            ->setDescription('Search a transport for a given postal code')
+            ->setDescription($this->translator->trans('discord.search.description'))
             ->addOption(
                 (new CommandOption($discord))
                     ->setName('postal_code')
-                    ->setDescription('Postal code you\'re coming from or you\'re going to')
+                    ->setDescription($this->translator->trans('discord.search.option.postal_code'))
                     ->setType(CommandOption::STRING)
                     ->setRequired(true)
             )
             ->addOption(
                 (new CommandOption($discord))
                     ->setName('direction')
-                    ->setDescription('If you\'re going to the event or coming back from it')
+                    ->setDescription($this->translator->trans('discord.search.option.direction'))
                     ->setType(CommandOption::STRING)
-                    ->addChoice(Choice::new($discord, 'To the event', Direction::EVENT->value))
-                    ->addChoice(Choice::new($discord, 'Back to home', Direction::HOME->value))
+                    ->addChoice(Choice::new($discord, $this->translator->trans('enum.event'), Direction::EVENT->value))
+                    ->addChoice(Choice::new($discord, $this->translator->trans('enum.home'), Direction::HOME->value))
                     ->setRequired(true)
             );
     }
@@ -55,7 +57,7 @@ final readonly class SearchCommand implements CommandInterface
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) {
-            if ($interaction->user?->bot ?? false) {
+            if (null === $interaction->user || $interaction->user->bot) {
                 return; // ignore bots
             }
 
@@ -72,10 +74,10 @@ final readonly class SearchCommand implements CommandInterface
 
             $transports = ($this->searchTransport)($event, $postalCode, $direction);
 
-            $content = 'Transports found:' . "\n";
+            $content = $this->translator->trans('discord.search.intro') . "\n";
             foreach ($transports as $transport) {
                 // @fixme issue with available seats
-                $content .= sprintf('- [`%s`] %s %s leaving at %s - %d/%d seats available leaving', $transport->shortId, Direction::EVENT === $transport->direction ? 'From' : 'To', $transport->postalCode, $transport->startAt->format(\DateTimeInterface::ATOM), $transport->availableSeats(), $transport->seats) . "\n";
+                $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? 'From' : 'To', 'postal_code' => $transport->postalCode, 'date' => $transport->startAt->format(\DateTimeInterface::ATOM), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]) . "\n";
             }
 
             $interaction->respondWithMessage(MessageBuilder::new()->setContent($content), true);

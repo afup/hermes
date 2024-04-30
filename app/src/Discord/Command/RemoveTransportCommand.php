@@ -19,6 +19,7 @@ use Discord\Discord;
 use Discord\Parts\Embed\Embed;
 use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class RemoveTransportCommand implements CommandInterface
 {
@@ -28,6 +29,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
     private const COMMAND_NAME = 'remove_transport';
 
     public function __construct(
+        private TranslatorInterface $translator,
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
         private FindUserTransportsForEvent $findUserTransportForEvent,
@@ -39,13 +41,13 @@ final readonly class RemoveTransportCommand implements CommandInterface
     {
         return CommandBuilder::new()
             ->setName(self::COMMAND_NAME)
-            ->setDescription('Remove the transport you created for the event');
+            ->setDescription($this->translator->trans('discord.remove_transport.description'));
     }
 
     public function callback(Discord $discord): void
     {
         $discord->listenCommand(self::COMMAND_NAME, function (Interaction $interaction) use ($discord) {
-            if ($interaction->user?->bot ?? false) {
+            if (null === $interaction->user || $interaction->user->bot) {
                 return; // ignore bots
             }
 
@@ -56,7 +58,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
 
             $transports = ($this->findUserTransportForEvent)($event, $user);
             if (0 === \count($transports)) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':no_entry: You have no transport(s) created for current channel\'s event.'), true);
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.error.no_transport')), true);
 
                 return;
             }
@@ -65,7 +67,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
                 $this->validateRemoval($discord, $interaction, $transports[0]);
             } else {
                 $embed = new Embed($discord);
-                $embed->setTitle(':wastebasket: Which transport you wanna remove ?');
+                $embed->setTitle($this->translator->trans('discord.remove_transport.ask_remove'));
                 $message = MessageBuilder::new()->addEmbed($embed);
 
                 /** @var array<array<Transport>> $chunkedTransports */
@@ -74,7 +76,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
                     $chooseAction = ActionRow::new();
 
                     foreach ($transportRow as $transport) {
-                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel(sprintf('[%s] %s', Direction::EVENT === $transport->direction ? 'To the event' : 'To my place', $transport->startAt->format(\DateTimeInterface::ATOM)))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.remove_transport.button_label', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $transport->startAt->format(\DateTimeInterface::ATOM)]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
                             $this->validateRemoval($discord, $interaction, $transport);
                         }, $discord));
                     }
@@ -90,18 +92,18 @@ final readonly class RemoveTransportCommand implements CommandInterface
     private function validateRemoval(Discord $discord, Interaction $interaction, Transport $transport): void
     {
         $embed = new Embed($discord);
-        $embed->setTitle(':wastebasket: Are you sure you want to delete your transport ?');
+        $embed->setTitle($this->translator->trans('discord.remove_transport.validation_remove'));
 
         $validation = ActionRow::new()
-            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel('Delete')->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($transport): void {
-                $transportId = $transport->id;
+            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel($this->translator->trans('discord.remove_transport.button_validation'))->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($transport): void {
+                $transportId = $transport->shortId;
                 $this->entityManager->remove($transport);
                 $this->entityManager->flush();
 
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf('🗑️ Transport #%d was removed.', $transportId)), true);
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.label_validation', ['transport_id' => $transportId])), true);
             }, $discord))
-            ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel('Cancel')->setEmoji('❌')->setListener(function (Interaction $interaction): void {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent('❌ Ignoring removal request.'), true);
+            ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.remove_transport.button_cancel'))->setEmoji('❌')->setListener(function (Interaction $interaction): void {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.label_cancel')), true);
             }, $discord));
 
         $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);

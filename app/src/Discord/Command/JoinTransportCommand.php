@@ -20,6 +20,7 @@ use Discord\Parts\Interactions\Command\Option as CommandOption;
 use Discord\Parts\Interactions\Interaction;
 use Discord\Parts\User\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class JoinTransportCommand implements CommandInterface
 {
@@ -30,6 +31,7 @@ final readonly class JoinTransportCommand implements CommandInterface
     private const COMMAND_NAME = 'join_transport';
 
     public function __construct(
+        private TranslatorInterface $translator,
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
         private GetTransportForEvent $getTransportForEvent,
@@ -41,11 +43,11 @@ final readonly class JoinTransportCommand implements CommandInterface
     {
         return CommandBuilder::new()
             ->setName(self::COMMAND_NAME)
-            ->setDescription('Join a transport as a passenger')
+            ->setDescription($this->translator->trans('discord.join_transport.description'))
             ->addOption(
                 (new CommandOption($discord))
                     ->setName('transport')
-                    ->setDescription('ID of the transport you wanna join (taken from /search command)')
+                    ->setDescription($this->translator->trans('discord.join_transport.option.transport'))
                     ->setType(CommandOption::STRING)
                     ->setRequired(true)
             );
@@ -67,7 +69,7 @@ final readonly class JoinTransportCommand implements CommandInterface
 
             $transport = ($this->getTransportForEvent)($event, $transportId);
             if (null === $transport) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent(':interrobang: Could not find a Transport for current channel Event.'), true);
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.no_transport')), true);
 
                 return;
             }
@@ -77,11 +79,11 @@ final readonly class JoinTransportCommand implements CommandInterface
             $this->entityManager->flush();
 
             $transportDriver = $transport->getDriver();
-            $interaction->respondWithMessage(MessageBuilder::new()->setContent(sprintf(':bust_in_silhouette: You are now riding in Transport `%s`.', $transport->shortId)), true);
-            $interaction->user->sendMessage(MessageBuilder::new()->setContent(sprintf('Thanks for sharing a ride with <@%d>, if you want more details about the transport please send DM to the transport creator: <@%d>', $transportDriver->userId, $transportDriver->userId)));
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.validation_direct', ['transport_id' => $transport->shortId])), true);
+            $interaction->user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.validation_dm', ['driver_id' => $transportDriver->userId])));
             $discord->users->fetch((string) $transportDriver->userId)->then(function (User $user) use ($transport, $interaction) {
-                $direction = sprintf(Direction::EVENT === $transport->direction ? 'from %s to the event' : 'from the event to %s', $transport->postalCode);
-                $user->sendMessage(MessageBuilder::new()->setContent(sprintf('A new co-traveler joined your transport %s (%s), you can send him a message: <@%s>', $direction, $transport->startAt->format(\DateTimeInterface::ATOM), $interaction->user->id)));
+                $direction = $this->translator->trans(Direction::EVENT === $transport->direction ? 'discord.join_transport.validation_driver_direction_event' : 'discord.join_transport.validation_driver_direction_home', ['postal_code' => $transport->postalCode]);
+                $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.validation_driver', ['direction' => $direction, 'date' => $transport->startAt->format(\DateTimeInterface::ATOM), 'traveler_id' => $interaction->user->id])));
             });
         });
     }
