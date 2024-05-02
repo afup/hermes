@@ -51,8 +51,8 @@ final readonly class CreateTransportCommand implements CommandInterface
             ->setDescription($this->translator->trans('discord.create_transport.description'))
             ->addOption(
                 (new CommandOption($discord))
-                    ->setName('seats')
-                    ->setDescription($this->translator->trans('discord.create_transport.option.seats'))
+                    ->setName('passenger_seats')
+                    ->setDescription($this->translator->trans('discord.create_transport.option.passenger_seats'))
                     ->setType(CommandOption::INTEGER)
                     ->setRequired(true)
             )
@@ -65,11 +65,20 @@ final readonly class CreateTransportCommand implements CommandInterface
             )
             ->addOption(
                 (new CommandOption($discord))
-                    ->setName('when')
-                    ->setDescription($this->translator->trans('discord.create_transport.option.when'))
+                    ->setName('when_date')
+                    ->setDescription($this->translator->trans('discord.create_transport.option.when_date'))
                     ->setType(CommandOption::STRING)
-                    ->setMinLength(19)
-                    ->setMaxLength(19)
+                    ->setMinLength(10)
+                    ->setMaxLength(10)
+                    ->setRequired(true)
+            )
+            ->addOption(
+                (new CommandOption($discord))
+                    ->setName('when_time')
+                    ->setDescription($this->translator->trans('discord.create_transport.option.when_time'))
+                    ->setType(CommandOption::STRING)
+                    ->setMinLength(5)
+                    ->setMaxLength(5)
                     ->setRequired(true)
             );
     }
@@ -87,14 +96,29 @@ final readonly class CreateTransportCommand implements CommandInterface
             $user = $this->getUserForInteraction($interaction);
 
             /** @var int $seats */
-            $seats = $this->getOptionForInteraction($interaction, 'seats');
+            $seats = $this->getOptionForInteraction($interaction, 'passenger_seats');
             /** @var string $postalCode */
             $postalCode = $this->getOptionForInteraction($interaction, 'postal_code');
-            /** @var string $whenString */
-            $whenString = $this->getOptionForInteraction($interaction, 'when');
-            $when = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $whenString);
+            /** @var string $whenDateString */
+            $whenDateString = $this->getOptionForInteraction($interaction, 'when_date');
+            $whenDate = \DateTimeImmutable::createFromFormat('Y-m-d', $whenDateString);
+            if (false === $whenDate) {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.invalid_date')), true);
 
-            if (false === $when) {
+                return;
+            }
+
+            /** @var string $whenTimeString */
+            $whenTimeString = $this->getOptionForInteraction($interaction, 'when_time');
+            $whenTime = \DateTimeImmutable::createFromFormat('H:i', $whenTimeString);
+            if (false === $whenTime) {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.invalid_date')), true);
+
+                return;
+            }
+
+            $when = $whenDate->setTime((int) $whenTime->format('H'), (int) $whenTime->format('i'));
+            if (false) { // @fixme check date is correct & close enough to the event (2j before/after)
                 $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.invalid_date')), true);
 
                 return;
@@ -117,12 +141,12 @@ final readonly class CreateTransportCommand implements CommandInterface
 
     private function createTransport(Interaction $interaction, Event $event, User $user, int $seats, string $postalCode, \DateTimeInterface $when, Direction $direction): void
     {
-        if (!($this->userCanCreateTransport)($event, $user, $direction)) {
+        if (!($this->userCanCreateTransport)($event, $user, $direction)) { // @fixme not working
             // possible use-cases:
             // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
             // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
             // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
-            $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.same_configuration')), true);
+            $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.same_configuration'))->setComponents([])->setEmbeds([]));
 
             return;
         }
@@ -134,6 +158,6 @@ final readonly class CreateTransportCommand implements CommandInterface
         $this->entityManager->persist($traveler);
         $this->entityManager->flush();
 
-        $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.created', ['transport_id' => $transport->shortId])), true);
+        $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.created', ['transport_id' => $transport->shortId]))->setComponents([])->setEmbeds([]));
     }
 }

@@ -5,7 +5,9 @@ declare(strict_types=1);
 return [
     'enum' => [
         'event' => 'To the event',
+        'event_with_postal_code' => 'from {postal_code} to the event',
         'home' => 'To my place',
+        'home_with_postal_code' => 'from the event to {postal_code}',
     ],
     'command' => [
         'create_event' => [
@@ -45,26 +47,29 @@ return [
         'create_transport' => [
             'description' => 'Create a new transport for the event',
             'option' => [
-                'seats' => 'Number of seats available for other travelers',
-                'postal_code' => 'Postal code you\'re coming from or you\'re going to',
-                'when' => 'When you are starting your trip (format: YYYY-MM-DD HH:MM:SS)',
+                'passenger_seats' => 'Number of seats available for other travelers',
+                'postal_code' => 'Postal code you\'re coming from on your way to the event or you\'re going back to',
+                'when_date' => 'The day of your transport (format: YYYY-MM-DD)',
+                'when_time' => 'The time of your transport (format: HH:MM)',
             ],
             'ask_direction' => '🚙 Are you going to the event or coming back to your place ?',
             'created' => '✅ Transport `{transport_id}` created.',
             'error' => [
-                'invalid_date' => '🕐 Date-time passed has invalid format, please use following format: YYYY-MM-DD HH:MM:SS',
+                'invalid_date' => '🕐 Date-time passed has invalid format, please use following format for date: YYYY-MM-DD, and for time: HH:MM',
                 'same_configuration' => '⛔ You already have created a transport with the same configuration, you can\'t have more than one transport per day and per direction.',
             ],
         ],
         'drop_traveler_from_transport' => [
             'description' => 'Drop a traveler from one of your transport',
             'ask_transport' => '🗑️ From which transport you wanna drop a traveler ?',
-            'transport_button' => '[{direction}] {date}',
+            'transport_button' => '{direction} at {date}',
+            'no_traveler' => 'You have no travelers for this transport.',
             'ask_traveler' => '🗑️ Which traveler you wanna drop from this transport ?',
-            'traveler_button' => '<@{traveler_id}>',
-            'confirmation' => '🗑️ Are you sure you want to drop this traveler: <@{traveler_id}> ?',
+            'traveler_button' => '{traveler_display_name}',
+            'confirmation' => '🗑️ Are you sure you want to drop this traveler: {traveler_display_name}> ?',
             'confirm_button' => 'Drop this traveler',
             'confirm_label' => '🗑️ Traveler was dropped.',
+            'dropped_traveler_dm' => 'The transport {direction} at {date} was cancelled. You can still find a new one: <#{event_channel}> using /search',
             'cancel_button' => 'Cancel',
             'cancel_label' => '❌ Ignoring removal request.',
             'error' => [
@@ -76,22 +81,21 @@ return [
             'option' => [
                 'transport' => 'ID of the transport you wanna join (taken from /search command)',
             ],
-            'validation_direct' => '👤 You are now riding in Transport `{transport_id}`.',
-            'validation_dm' => 'Thanks for sharing a ride with <@{driver_id}>, if you want more details about the transport please send DM to the transport creator: <@{driver_id}>',
-            'validation_driver_direction_event' => 'from {postal_code} to the event',
-            'validation_driver_direction_home' => 'from the event to {postal_code}',
-            'validation_driver' => 'A new co-traveler joined your transport {direction} ({date}), you can send him a message: <@{traveler_id}>',
+            'validation_direct' => '👤 You are now riding in transport `{transport_id}` (find more details about this transport with /status command).',
+            'validation_dm' => 'Thanks for sharing a transport with <@{driver_id}>, get more details about the transport please send a DM to the transport driver: <@{driver_id}>',
+            'validation_driver' => 'A new co-traveler joined your transport {direction} (at {date}), they’ll be in touch with you or you can send them a DM: <@{traveler_id}>',
             'error' => [
-                'no_transport' => '⁉️ Could not find a Transport for current channel event.',
+                'no_transport' => '⁉️ Could not find a transport for current channel event.',
             ],
         ],
-        'leave_transport' => [
-            'description' => 'Leave a transport as a passenger',
-            'travel_choice' => '🗑️ Which travel you wanna leave ?',
-            'choice_button' => '[{direction}] {date}',
-            'confirmation' => '🗑️ Are you sure you want to leave this travel ?',
+        'quit_transport' => [
+            'description' => 'Quit a transport as a passenger',
+            'travel_choice' => '🗑️ Which transport you wanna leave ?',
+            'choice_button' => '{direction} at {date}',
+            'confirmation' => '🗑️ Are you sure you want to leave this transport ?',
             'confirm_button' => 'Leave',
-            'confirm_label' => '🗑️ You left the travel !',
+            'confirm_label' => '🗑️ You left the transport !',
+            'driver_dm' => 'Someone left your transport {direction} at {date}. You now have {seats_remaining}/{seats_total} passenger seats available.',
             'cancel_button' => 'Cancel',
             'cancel_label' => '❌ Ignoring removal request.',
             'error' => [
@@ -99,14 +103,15 @@ return [
             ],
         ],
         'remove_transport' => [
-            'description' => 'Remove the transport you created for the event',
+            'description' => 'Remove a transport you created for this event',
             'ask_remove' => '🗑️ Which transport you wanna remove ?',
-            'button_label' => '[{direction}] {date}',
+            'button_label' => '{direction} at {date}',
             'validation_remove' => '🗑️ Are you sure you want to delete your transport ?',
             'button_validation' => 'Delete',
             'label_validation' => '🗑️ Transport `{transport_id}` was removed.',
             'button_cancel' => 'Cancel',
             'label_cancel' => '❌ Ignoring removal request.',
+            'removal_dm' => 'The transport {direction} at {date} was cancelled. You can still find a new one: <#{event_channel}> using /search',
             'error' => [
                 'no_transport' => '⛔ You have no transport(s) created for current channel\'s event.',
             ],
@@ -114,17 +119,19 @@ return [
         'search' => [
             'description' => 'Search a transport for a given postal code',
             'option' => [
-                'postal_code' => 'Postal code you\'re coming from or you\'re going to',
+                'postal_code' => 'Postal code you\'re coming from on your way to the event or you\'re going back to', // (it can be from 2 to 5 characters: 44 or 44430)
                 'direction' => 'If you\'re going to the event or coming back from it',
             ],
             'intro' => 'Transports found:',
-            'row' => '- [`{transport_id}`] {direction} {postal_code} leaving at {date} - {seats_remaining}/{seats_total} seats available leaving',
+            'row' => '- [`{transport_id}`] {direction} {postal_code} leaving at {date} - {seats_remaining}/{seats_total} passenger seats available',
+            'empty' => 'No transport found.',
         ],
         'status' => [
-            'description' => 'Your current status within the current channel event',
+            'description' => 'List the transport(s) you\'ve created or joined',
             'intro' => 'Your status for "{name}" event:',
             'row' => '- [{traveler_type}] Leaving at {date} from {postal_code}',
-            'row_not_driver' => ' (created by <@{driver_id}>)',
+            'row_not_driver' => ' (transported by <@{driver_id}>)',
+            'row_driver' => ' ({seats_remaining}/{seats_total} passenger seats available)',
             'empty' => 'You have not registered in any transport for "{name}" event.',
         ],
     ],

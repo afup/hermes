@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\UniqueConstraint('name_idx', ['name'])]
 #[ORM\HasLifecycleCallbacks]
-final class Event
+class Event
 {
     use CreatedAtTrait;
 

@@ -54,9 +54,11 @@ final readonly class StatusCommand implements CommandInterface
             $travelers = ($this->getTravelerListForUserAndEvent)($user, $event);
             $hasContent = false;
             foreach ($travelers as $traveler) {
-                $status = $this->translator->trans('discord.status.row', ['traveler_type' => $traveler->type->value, 'date' => $traveler->transport->startAt->format(\DateTimeInterface::ATOM), 'postal_code' => $traveler->transport->postalCode]);
+                $status = $this->translator->trans('discord.status.row', ['traveler_type' => $traveler->type->value, 'date' => $traveler->transport->startAt->format('H\hi \o\n j F Y'), 'postal_code' => $traveler->transport->postalCode]);
                 if (Traveler::DRIVER !== $traveler->type) {
                     $status .= $this->translator->trans('discord.status.row_not_driver', ['driver_id' => $traveler->transport->getDriver()->userId]);
+                } else {
+                    $status .= $this->translator->trans('discord.status.row_driver', ['seats_remaining' => $traveler->transport->availableSeats(), 'seats_total' => $traveler->transport->seats]);
                 }
 
                 $content .= $status . "\n";

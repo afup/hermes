@@ -66,7 +66,7 @@ final class EventCommand extends Command
         /** @var int $eventChannelId */
         $eventChannelId = $io->askQuestion($channelQuestion);
 
-        $startAtQuestion = new Question($this->translator->trans('command.create_event.event_date'));
+        $startAtQuestion = new Question($this->translator->trans('command.create_event.start_date'));
         $startAtQuestion->setMaxAttempts(3);
         $startAtQuestion->setValidator(function (mixed $answer) {
             $dateTime = \DateTimeImmutable::createFromFormat('Y-m-d', $answer);

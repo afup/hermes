@@ -73,11 +73,15 @@ final readonly class SearchCommand implements CommandInterface
             $direction = Direction::tryFrom($directionString);
 
             $transports = ($this->searchTransport)($event, $postalCode, $direction);
+            if (0 === \count($transports)) {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.search.empty')), true);
+
+                return;
+            }
 
             $content = $this->translator->trans('discord.search.intro') . "\n";
             foreach ($transports as $transport) {
-                // @fixme issue with available seats
-                $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? 'From' : 'To', 'postal_code' => $transport->postalCode, 'date' => $transport->startAt->format(\DateTimeInterface::ATOM), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]) . "\n";
+                $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? 'From' : 'To', 'postal_code' => $transport->postalCode, 'date' => $transport->startAt->format('H\hi \o\n j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]) . "\n";
             }
 
             $interaction->respondWithMessage(MessageBuilder::new()->setContent($content), true);

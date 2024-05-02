@@ -8,6 +8,7 @@ use Afup\Hermes\Discord\Command\Helper\EventHelper;
 use Afup\Hermes\Discord\Command\Helper\UserHelper;
 use Afup\Hermes\Entity\Transport;
 use Afup\Hermes\Enum\Direction;
+use Afup\Hermes\Enum\Traveler;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Transport\FindUserTransportsForEvent;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
@@ -18,6 +19,7 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Embed\Embed;
 use Discord\Parts\Interactions\Interaction;
+use Discord\Parts\User\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -76,7 +78,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
                     $chooseAction = ActionRow::new();
 
                     foreach ($transportRow as $transport) {
-                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.remove_transport.button_label', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $transport->startAt->format(\DateTimeInterface::ATOM)]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.remove_transport.button_label', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $transport->startAt->format('H\hi \o\n j F Y')]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
                             $this->validateRemoval($discord, $interaction, $transport);
                         }, $discord));
                     }
@@ -95,17 +97,28 @@ final readonly class RemoveTransportCommand implements CommandInterface
         $embed->setTitle($this->translator->trans('discord.remove_transport.validation_remove'));
 
         $validation = ActionRow::new()
-            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel($this->translator->trans('discord.remove_transport.button_validation'))->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($transport): void {
+            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel($this->translator->trans('discord.remove_transport.button_validation'))->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($transport, $discord): void {
                 $transportId = $transport->shortId;
-                $this->entityManager->remove($transport);
-                $this->entityManager->flush();
+                foreach ($transport->travelers as $traveler) {
+                    if (Traveler::DRIVER !== $traveler->type) {
+                        $discord->users->fetch((string) $traveler->user->userId)->then(function (User $user) use ($transport) {
+                            $direction = $this->translator->trans(Direction::EVENT === $transport->direction ? 'enum.event_with_postal_code' : 'enum.home_with_postal_code', ['postal_code' => $transport->postalCode]);
+                            $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.removal_dm', ['direction' => $direction, 'date' => $transport->startAt->format('H\hi \o\n j F Y'), 'event_channel' => $transport->event->channelId])));
+                        });
+                    }
+                }
 
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.label_validation', ['transport_id' => $transportId])), true);
+                $interaction
+                    ->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.label_validation', ['transport_id' => $transportId]))->setComponents([])->setEmbeds([]))
+                    ->then(function () use ($transport) {
+                        $this->entityManager->remove($transport);
+                        $this->entityManager->flush();
+                    });
             }, $discord))
             ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.remove_transport.button_cancel'))->setEmoji('❌')->setListener(function (Interaction $interaction): void {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.label_cancel')), true);
+                $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.label_cancel'))->setComponents([])->setEmbeds([]));
             }, $discord));
 
-        $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
+        $interaction->updateMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation));
     }
 }

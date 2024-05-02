@@ -23,7 +23,7 @@ final readonly class FindOrCreateUser
         if (null === $user) {
             $user = new User($userId);
             $this->entityManager->persist($user);
-            $this->entityManager->flush(); // @fixme maybe to optimize later on to have a single flush in a transaction ?
+            $this->entityManager->flush();
         }
 
         return $user;

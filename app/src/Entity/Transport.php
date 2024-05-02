@@ -77,6 +77,6 @@ class Transport
 
     public function availableSeats(): int
     {
-        return $this->seats - $this->travelers->count() + 1;
+        return $this->seats - ($this->travelers->count() - 1);
     }
 }

@@ -20,6 +20,7 @@ use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Embed\Embed;
 use Discord\Parts\Interactions\Interaction;
+use Discord\Parts\User\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -78,7 +79,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
                     $chooseAction = ActionRow::new();
 
                     foreach ($transportRow as $transport) {
-                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.transport_button', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $transport->startAt->format(\DateTimeInterface::ATOM)]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.transport_button', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $transport->startAt->format('H\hi \o\n j F Y')]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
                             $this->chooseTravelerToDrop($discord, $interaction, $transport);
                         }, $discord));
                     }
@@ -97,40 +98,53 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
         $embed->setTitle($this->translator->trans('discord.drop_traveler_from_transport.ask_traveler'));
         $message = MessageBuilder::new()->addEmbed($embed);
 
+        if (0 === \count($passengers = iterator_to_array($transport->getPassengers()))) {
+            $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.no_traveler'))->setComponents([])->setEmbeds([]));
+
+            return;
+        }
+
         /** @var array<array<Traveler>> $chunkedTravelers */
-        $chunkedTravelers = array_chunk(iterator_to_array($transport->getPassengers()), 5);
+        $chunkedTravelers = array_chunk($passengers, 5);
         foreach ($chunkedTravelers as $travelerRow) {
             $chooseAction = ActionRow::new();
 
             foreach ($travelerRow as $traveler) {
-                $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.traveler_button', ['traveler_id' => $traveler->user->userId]))->setEmoji('👤')->setListener(function (Interaction $interaction) use ($discord, $traveler): void {
-                    $this->validateTravelerToDrop($discord, $interaction, $traveler);
-                }, $discord));
+                $discord->users->fetch((string) $traveler->user->userId)->then(function (User $travelerUser) use ($chooseAction, $discord, $traveler) {
+                    $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.traveler_button', ['traveler_display_name' => $travelerUser->displayname]))->setEmoji('👤')->setListener(function (Interaction $interaction) use ($discord, $traveler, $travelerUser): void {
+                        $this->validateTravelerToDrop($discord, $interaction, $traveler, $travelerUser);
+                    }, $discord));
+                });
             }
 
             $message->addComponent($chooseAction);
         }
 
-        $interaction->respondWithMessage($message, true);
+        $interaction->updateMessage($message);
     }
 
-    private function validateTravelerToDrop(Discord $discord, Interaction $interaction, Traveler $traveler): void
+    private function validateTravelerToDrop(Discord $discord, Interaction $interaction, Traveler $traveler, User $travelerUser): void
     {
         $embed = new Embed($discord);
-        $embed->setTitle($this->translator->trans('discord.drop_traveler_from_transport.confirmation', ['traveler_id' => $traveler->user->userId]));
+        $embed->setTitle($this->translator->trans('discord.drop_traveler_from_transport.confirmation', ['traveler_display_name' => $travelerUser->displayname]));
 
         $validation = ActionRow::new()
-            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.confirm_button'))->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($traveler): void {
+            ->addComponent(Button::new(Button::STYLE_DANGER)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.confirm_button'))->setEmoji('🗑️')->setListener(function (Interaction $interaction) use ($traveler, $discord): void {
+                $travelerUser = $traveler->user;
+                $transport = $traveler->transport;
                 $this->entityManager->remove($traveler);
                 $this->entityManager->flush();
 
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.confirm_label')), true);
-                // @fixme send a notification to the traveler that he was dropped
+                $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.confirm_label'))->setComponents([])->setEmbeds([]));
+                $discord->users->fetch((string) $travelerUser->userId)->then(function (User $user) use ($transport) {
+                    $direction = $this->translator->trans(Direction::EVENT === $transport->direction ? 'enum.event_with_postal_code' : 'enum.home_with_postal_code', ['postal_code' => $transport->postalCode]);
+                    $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.dropped_traveler_dm', ['direction' => $direction, 'date' => $transport->startAt->format('H\hi \o\n j F Y'), 'event_channel' => $transport->event->channelId])));
+                });
             }, $discord))
             ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.cancel_button'))->setEmoji('❌')->setListener(function (Interaction $interaction): void {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.cancel_label')), true);
+                $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.cancel_label'))->setComponents([])->setEmbeds([]));
             }, $discord));
 
-        $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
+        $interaction->updateMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation));
     }
 }

@@ -14,6 +14,7 @@ use function React\Async\await;
 use React\Promise\PromiseInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -36,14 +37,22 @@ final class RegisterCommand extends Command
         parent::__construct();
     }
 
+    protected function configure(): void
+    {
+        $this
+            ->addArgument('filtered_command', InputArgument::OPTIONAL, 'Command to register');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        /** @var string|null $filteredCommand */
+        $filteredCommand = $input->getArgument('filtered_command');
 
-        $this->discord->on('init', function (Client $discord) use ($io) {
+        $this->discord->on('init', function (Client $discord) use ($io, $filteredCommand) {
             $this
                 ->findAllCommands($discord)
-                ->then(function (array $commands) use ($discord, $io) {
+                ->then(function (array $commands) use ($discord, $io, $filteredCommand) {
                     if (0 === \count($commands)) {
                         $io->info($this->translator->trans('command.register.error.no_slash_commands'));
 
@@ -52,14 +61,23 @@ final class RegisterCommand extends Command
 
                     $io->title($this->translator->trans('command.register.to_clean', ['commands' => \count($commands)]));
                     foreach ($commands as $command) {
+                        if (null !== $filteredCommand && $filteredCommand !== $command->name) {
+                            continue;
+                        }
+
                         $io->note($this->translator->trans('command.register.cleaning', ['command' => $command->name, 'id' => $command->id]));
                         await($discord->application->commands->delete($command->id));
                     }
                 })
-                ->then(function () use ($discord, $io) {
-                    $io->note($this->translator->trans('command.register.to_register', ['commands' => \count(iterator_to_array($this->commands))]));
+                ->then(function () use ($discord, $io, $filteredCommand) {
+                    $io->title($this->translator->trans('command.register.to_register', ['commands' => \count(iterator_to_array($this->commands))]));
+
                     foreach ($this->commands as $command) {
                         $configuredCommand = $command->configure($discord)->toArray();
+                        if (null !== $filteredCommand && $filteredCommand !== $configuredCommand['name']) {
+                            continue;
+                        }
+
                         $io->note($this->translator->trans('command.register.register', ['command' => $configuredCommand['name']]));
                         await($discord->application->commands->save($discord->application->commands->create($configuredCommand)));
                     }
