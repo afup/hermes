@@ -7,14 +7,14 @@ use function Castor\run;
 #[AsTask(name: 'create', namespace: 'database', description: 'Create database')]
 function databaseCreate(): void
 {
-    io()->note('Creating local SQlite database');
+    io()->note('Creating local database');
     run('bin/console doctrine:database:create', workingDirectory: 'app/');
 }
 
 #[AsTask(name: 'reset', namespace: 'database', description: 'Reset database')]
 function databaseReset(): void
 {
-    io()->note('Dropping local SQlite database');
+    io()->note('Dropping local database');
     run('bin/console doctrine:database:drop --if-exists', workingDirectory: 'app/');
     databaseCreate();
 }

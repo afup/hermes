@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 trait CreatedAtTrait
 {
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    public \DateTimeInterface $createdAt;
+    public \DateTimeImmutable $createdAt;
 
     #[ORM\PrePersist]
     public function setCreatedAt(): void

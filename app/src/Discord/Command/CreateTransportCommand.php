@@ -118,11 +118,6 @@ final readonly class CreateTransportCommand implements CommandInterface
             }
 
             $when = $whenDate->setTime((int) $whenTime->format('H'), (int) $whenTime->format('i'));
-            if (false) { // @fixme check date is correct & close enough to the event (2j before/after)
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.invalid_date')), true);
-
-                return;
-            }
 
             $embed = new Embed($discord);
             $embed->setTitle($this->translator->trans('discord.create_transport.ask_direction'));
@@ -139,8 +134,14 @@ final readonly class CreateTransportCommand implements CommandInterface
         });
     }
 
-    private function createTransport(Interaction $interaction, Event $event, User $user, int $seats, string $postalCode, \DateTimeInterface $when, Direction $direction): void
+    private function createTransport(Interaction $interaction, Event $event, User $user, int $seats, string $postalCode, \DateTimeImmutable $when, Direction $direction): void
     {
+        if (!$this->checkTransportDateIsValid($when, $event, $direction)) {
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.invalid_date')), true);
+
+            return;
+        }
+
         if (!($this->userCanCreateTransport)($event, $user, $direction)) { // @fixme not working
             // possible use-cases:
             // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
@@ -159,5 +160,20 @@ final readonly class CreateTransportCommand implements CommandInterface
         $this->entityManager->flush();
 
         $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.created', ['transport_id' => $transport->shortId]))->setComponents([])->setEmbeds([]));
+    }
+
+    private function checkTransportDateIsValid(\DateTimeImmutable $when, Event $event, Direction $direction): bool
+    {
+        if (Direction::EVENT === $direction) {
+            $earliestTransport = $event->startAt->sub(new \DateInterval('P2D'));
+
+            // début-2 <= $when <= fin
+            return $earliestTransport <= $when && $when <= $event->finishAt;
+        } else {
+            $latestTransport = $event->finishAt->add(new \DateInterval('P2D'));
+
+            // début <= $when <= fin+2
+            return $event->startAt <= $when && $when <= $latestTransport;
+        }
     }
 }

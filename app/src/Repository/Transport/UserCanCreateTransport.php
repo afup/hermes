@@ -16,14 +16,14 @@ final readonly class UserCanCreateTransport
     ) {
     }
 
-    public function __invoke(Event $event, User $user, Direction $direction): bool
+    public function __invoke(Event $event, User $user, Direction $direction, \DateTimeImmutable $date): bool
     {
         $sql = <<<SQL
 SELECT tp.id
 FROM transport tp
 INNER JOIN traveler tv ON tv.transport_id = tp.id
 WHERE tp.event_id = :eventId
-AND DATE(tp.start_at) = DATE(NOW())
+AND DATE(tp.start_at) = :date
 AND tv.user_id = :userId
 AND tv.type = 'driver'
 AND tp.direction = :direction
@@ -34,6 +34,7 @@ SQL;
         $statement->bindValue('eventId', $event->id);
         $statement->bindValue('userId', $user->id);
         $statement->bindValue('direction', $direction->value);
+        $statement->bindValue('date', $date->format('Y-m-d H:i:s'));
         $result = $statement->executeQuery();
         /** @var false|int $transportId */
         $transportId = $result->fetchOne();

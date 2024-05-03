@@ -47,7 +47,7 @@ class Transport
         public readonly Direction $direction,
 
         #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-        public readonly \DateTimeInterface $startAt,
+        public readonly \DateTimeImmutable $startAt,
     ) {
         $this->travelers = new ArrayCollection();
         $this->shortId = Shortid::generate(5)->serialize();

@@ -28,7 +28,12 @@
         "team-reflex/discord-php": "dev-feature/allow-symfony7"
     },
     "require-dev": {
-        "symfony/maker-bundle": "^1.57"
+        "phpunit/phpunit": "^9.5",
+        "symfony/browser-kit": "7.0.*",
+        "symfony/css-selector": "7.0.*",
+        "symfony/maker-bundle": "^1.57",
+        "symfony/phpunit-bridge": "^7.0",
+        "zenstruck/foundry": "1.x-dev@dev"
     },
     "config": {
         "allow-plugins": {

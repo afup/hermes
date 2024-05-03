@@ -27,10 +27,10 @@ class Event
         public readonly int $channelId,
 
         #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-        public readonly \DateTimeInterface $startAt,
+        public readonly \DateTimeImmutable $startAt,
 
         #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-        public readonly \DateTimeInterface $finishAt,
+        public readonly \DateTimeImmutable $finishAt,
     ) {
     }
 }
