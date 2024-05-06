@@ -1,0 +1,11 @@
+--- /dev/null
++++ ../src/Proxy.php
+@@ -164,7 +164,7 @@
+ 
+     public function refresh(): self
+     {
+-        if (!Factory::configuration()->isPersistEnabled()) {
++        if (!Factory::configuration()->isPersistEnabled() || !Factory::configuration()->defaultProxyAutoRefresh()) {
+             return $this;
+         }
+ 

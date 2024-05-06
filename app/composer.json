@@ -13,6 +13,7 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "cweagans/composer-patches": "^1.7",
         "doctrine/dbal": "^3",
         "doctrine/doctrine-bundle": "^2.12",
         "doctrine/doctrine-migrations-bundle": "^3.3",
@@ -33,13 +34,15 @@
         "symfony/css-selector": "7.0.*",
         "symfony/maker-bundle": "^1.57",
         "symfony/phpunit-bridge": "^7.0",
-        "zenstruck/foundry": "1.x-dev@dev"
+        "symplify/vendor-patches": "^11.3",
+        "zenstruck/foundry": "^1.0"
     },
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
             "symfony/flex": true,
-            "symfony/runtime": true
+            "symfony/runtime": true,
+            "cweagans/composer-patches": true
         },
         "sort-packages": true
     },
@@ -79,6 +82,11 @@
         "symfony/symfony": "*"
     },
     "extra": {
+        "patches": {
+            "zenstruck/foundry": [
+                "patches/zenstruck-foundry-src-proxy-php.patch"
+            ]
+        },
         "symfony": {
             "allow-contrib": false,
             "require": "7.0.*"

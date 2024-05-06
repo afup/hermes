@@ -24,24 +24,24 @@ class UserCanCreateTransportTest extends KernelTestCase
     // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
     // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
 
-    //    public function testEventWithinSameDayOneTransport(): void
-    //    {
-    //        $user = UserFactory::createOne();
-    //        $event = EventFactory::new()->withinSameDay($eventDate = (new \DateTimeImmutable())->add(new \DateInterval('P1D')))->create();
-    //
-    //        /** @var UserCanCreateTransport $userCanCreateTransport */
-    //        $userCanCreateTransport = self::getContainer()->get(UserCanCreateTransport::class);
-    //        $this->assertTrue(($userCanCreateTransport)($event, $user, Direction::EVENT, $eventDate->sub(new \DateInterval('P1D'))));
-    //    }
-    //
-    //    public function testEventWithinSameDayTwoTransportTransport(): void
-    //    {
-    //        $user = UserFactory::createOne();
-    //        $event = EventFactory::new()->withinSameDay($eventDate = (new \DateTimeImmutable())->add(new \DateInterval('P1D')))->create();
-    //        $transport = TransportFactory::new()->withEvent($event)->withStartAt($eventDate->sub(new \DateInterval('P1D')))->create();
-    //
-    //        /** @var UserCanCreateTransport $userCanCreateTransport */
-    //        $userCanCreateTransport = self::getContainer()->get(UserCanCreateTransport::class);
-    //        $this->assertTrue(($userCanCreateTransport)($event, $user, Direction::EVENT, $eventDate->sub(new \DateInterval('P1D'))));
-    //    }
+    public function testEventWithinSameDayOneTransport(): void
+    {
+        $user = UserFactory::createOne();
+        $event = EventFactory::new()->withinSameDay($eventDate = (new \DateTimeImmutable())->add(new \DateInterval('P1D')))->create();
+
+        /** @var UserCanCreateTransport $userCanCreateTransport */
+        $userCanCreateTransport = self::getContainer()->get(UserCanCreateTransport::class);
+        $this->assertTrue(($userCanCreateTransport)($event->object(), $user->object(), Direction::EVENT, $eventDate->sub(new \DateInterval('P1D'))));
+    }
+
+    public function testEventWithinSameDayTwoTransportTransport(): void
+    {
+        $user = UserFactory::createOne();
+        $event = EventFactory::new()->withinSameDay($eventDate = (new \DateTimeImmutable())->add(new \DateInterval('P1D')))->create();
+        $transport = TransportFactory::new()->withEvent($event->object())->withStartAt($eventDate->sub(new \DateInterval('P1D')))->create();
+
+        /** @var UserCanCreateTransport $userCanCreateTransport */
+        $userCanCreateTransport = self::getContainer()->get(UserCanCreateTransport::class);
+        $this->assertTrue(($userCanCreateTransport)($event->object(), $user->object(), Direction::EVENT, $eventDate->sub(new \DateInterval('P1D'))));
+    }
 }

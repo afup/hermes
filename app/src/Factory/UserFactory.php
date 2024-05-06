@@ -7,7 +7,6 @@ namespace Afup\Hermes\Factory;
 use Afup\Hermes\Entity\User;
 use Doctrine\ORM\EntityRepository;
 use Zenstruck\Foundry\ModelFactory;
-use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 use Zenstruck\Foundry\Proxy;
 use Zenstruck\Foundry\RepositoryProxy;
 
@@ -30,9 +29,9 @@ use Zenstruck\Foundry\RepositoryProxy;
  * @method static User[]|Proxy[]                   randomRange(int $min, int $max, array $attributes = [])
  * @method static User[]|Proxy[]                   randomSet(int $number, array $attributes = [])
  */
-final class UserFactory extends PersistentObjectFactory
+final class UserFactory extends ModelFactory
 {
-    protected function defaults(): array
+    protected function getDefaults(): array
     {
         return [
             'userId' => self::faker()->randomNumber(9),
@@ -40,7 +39,7 @@ final class UserFactory extends PersistentObjectFactory
         ];
     }
 
-    public static function class(): string
+    public static function getClass(): string
     {
         return User::class;
     }

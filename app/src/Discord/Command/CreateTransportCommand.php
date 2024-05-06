@@ -142,7 +142,7 @@ final readonly class CreateTransportCommand implements CommandInterface
             return;
         }
 
-        if (!($this->userCanCreateTransport)($event, $user, $direction)) { // @fixme not working
+        if (!($this->userCanCreateTransport)($event, $user, $direction, $when)) { // @fixme not working
             // possible use-cases:
             // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
             // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)

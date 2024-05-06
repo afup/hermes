@@ -9,7 +9,6 @@ use Afup\Hermes\Entity\Transport;
 use Afup\Hermes\Enum\Direction;
 use Doctrine\ORM\EntityRepository;
 use Zenstruck\Foundry\ModelFactory;
-use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 use Zenstruck\Foundry\Proxy;
 use Zenstruck\Foundry\RepositoryProxy;
 
@@ -32,9 +31,9 @@ use Zenstruck\Foundry\RepositoryProxy;
  * @method static Transport[]|Proxy[]              randomRange(int $min, int $max, array $attributes = [])
  * @method static Transport[]|Proxy[]              randomSet(int $number, array $attributes = [])
  */
-final class TransportFactory extends PersistentObjectFactory
+final class TransportFactory extends ModelFactory
 {
-    protected function defaults(): array
+    protected function getDefaults(): array
     {
         return [
             'createdAt' => \DateTimeImmutable::createFromMutable(self::faker()->dateTime()),
@@ -49,15 +48,15 @@ final class TransportFactory extends PersistentObjectFactory
 
     public function withEvent(Event $event): self
     {
-        return $this->with(['event' => $event]);
+        return $this->addState(['event' => $event]);
     }
 
     public function withStartAt(\DateTimeImmutable $date): self
     {
-        return $this->with(['startAt' => $date]);
+        return $this->addState(['startAt' => $date]);
     }
 
-    public static function class(): string
+    public static function getClass(): string
     {
         return Transport::class;
     }

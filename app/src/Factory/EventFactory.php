@@ -7,7 +7,6 @@ namespace Afup\Hermes\Factory;
 use Afup\Hermes\Entity\Event;
 use Doctrine\ORM\EntityRepository;
 use Zenstruck\Foundry\ModelFactory;
-use Zenstruck\Foundry\Persistence\PersistentObjectFactory;
 use Zenstruck\Foundry\Proxy;
 use Zenstruck\Foundry\RepositoryProxy;
 
@@ -30,9 +29,9 @@ use Zenstruck\Foundry\RepositoryProxy;
  * @method static Event[]|Proxy[]                  randomRange(int $min, int $max, array $attributes = [])
  * @method static Event[]|Proxy[]                  randomSet(int $number, array $attributes = [])
  */
-final class EventFactory extends PersistentObjectFactory
+final class EventFactory extends ModelFactory
 {
-    protected function defaults(): array
+    protected function getDefaults(): array
     {
         $startAt = self::faker()->dateTimeBetween(self::faker()->dateTime(), self::faker()->dateTimeInInterval('+2 days'));
 
@@ -54,10 +53,10 @@ final class EventFactory extends PersistentObjectFactory
         $startAt = $eventDay->setTime(9, 30);
         $finishAt = $eventDay->setTime(18, 00);
 
-        return $this->with(['startAt' => $startAt, 'finishAt' => $finishAt]);
+        return $this->addState(['startAt' => $startAt, 'finishAt' => $finishAt]);
     }
 
-    public static function class(): string
+    public static function getClass(): string
     {
         return Event::class;
     }
