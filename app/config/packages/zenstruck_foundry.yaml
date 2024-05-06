@@ -1,2 +1,5 @@
-zenstruck_foundry:
-  auto_refresh_proxies: false
+when@dev: &foundry
+  zenstruck_foundry:
+    auto_refresh_proxies: false
+
+when@test: *foundry
