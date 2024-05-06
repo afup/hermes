@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Afup\Hermes\Tests\Repository\Transport;
+namespace Afup\Hermes\Tests\Discord\Command;
 
 use Afup\Hermes\Discord\Command\CreateTransportCommand;
 use Afup\Hermes\Entity\Event;

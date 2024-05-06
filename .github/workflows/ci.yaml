@@ -12,14 +12,12 @@ jobs:
           php-version: 8.3
           coverage: none
           tools: 'composer, castor'
-      - name: php-cs-fixer install
-        run: composer install --working-dir=tools/php-cs-fixer
-      - name: phpstan install
-        run: composer install --working-dir=tools/phpstan
-      - name: app install
-        run: composer update --prefer-stable --working-dir=app
+      - name: tools install
+        run: castor tools:install
+      - name: hermes install
+        run: castor hermes:install
       - name: php-cs-fixer check
-        run: 'castor tools:cs-check'
+        run: castor tools:cs-check
   phpstan:
     runs-on: ubuntu-latest
     steps:
@@ -36,9 +34,39 @@ jobs:
           php-version: 8.3
           coverage: none
           tools: 'composer, castor'
-      - name: app install
-        run: composer update --prefer-stable --working-dir=app
-      - name: phpstan install
-        run: composer install --working-dir=tools/phpstan
+      - name: tools install
+        run: castor tools:install
+      - name: hermes install
+        run: castor hermes:install
       - name: phpstan check
-        run: 'castor tools:phpstan'
+        run: castor tools:phpstan
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_USER: afup
+          POSTGRES_PASSWORD: p4ssw0rd
+        ports:
+          - 5432:5432
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+      - name: cache-composer
+        uses: actions/cache@v2
+        with:
+          path: ~/.composer/cache/
+          key: composer-${{ github.sha }}
+      - name: php setup
+        uses: shivammathur/setup-php@2.29.0
+        with:
+          php-version: 8.3
+          coverage: none
+          tools: 'composer, castor'
+      - name: tools install
+        run: castor tools:install
+      - name: hermes install
+        run: castor hermes:install
+      - name: run tests
+        run: castor hermes:tests

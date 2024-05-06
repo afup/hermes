@@ -3,12 +3,6 @@
     "license": "proprietary",
     "minimum-stability": "stable",
     "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/Korbeil/DiscordPHP.git"
-        }
-    ],
     "require": {
         "php": ">=8.2",
         "ext-ctype": "*",
@@ -26,7 +20,7 @@
         "symfony/monolog-bundle": "^3.10",
         "symfony/runtime": "7.0.*",
         "symfony/yaml": "7.0.*",
-        "team-reflex/discord-php": "dev-feature/allow-symfony7"
+        "korbeil/discord-php": "dev-feature/allow-symfony7"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
