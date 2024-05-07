@@ -56,6 +56,11 @@ final class TransportFactory extends ModelFactory
         return $this->addState(['startAt' => $date]);
     }
 
+    public function withDirection(Direction $direction): self
+    {
+        return $this->addState(['direction' => $direction]);
+    }
+
     public static function getClass(): string
     {
         return Transport::class;

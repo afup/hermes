@@ -18,6 +18,11 @@ final readonly class UserCanCreateTransport
 
     public function __invoke(Event $event, User $user, Direction $direction, \DateTimeImmutable $date): bool
     {
+        // possible use-cases:
+        // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
+        // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
+        // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
+
         $sql = <<<SQL
 SELECT tp.id
 FROM transport tp

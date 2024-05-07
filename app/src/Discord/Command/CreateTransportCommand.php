@@ -142,11 +142,7 @@ final readonly class CreateTransportCommand implements CommandInterface
             return;
         }
 
-        if (!($this->userCanCreateTransport)($event, $user, $direction, $when)) { // @fixme not working
-            // possible use-cases:
-            // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
-            // - ForumPHP, Nantes > Disneyland (one ride to go to the event, one to get back)
-            // - ForumPHP, Paris > Disneyland (one ride each day to go to the event, one ride each day to get back)
+        if (!($this->userCanCreateTransport)($event, $user, $direction, $when)) {
             $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.same_configuration'))->setComponents([])->setEmbeds([]));
 
             return;

@@ -56,6 +56,18 @@ final class EventFactory extends ModelFactory
         return $this->addState(['startAt' => $startAt, 'finishAt' => $finishAt]);
     }
 
+    public function withinTwoDays(?\DateTimeImmutable $eventDay = null): self
+    {
+        if (null === $eventDay) {
+            $eventDay = \DateTimeImmutable::createFromMutable(self::faker()->dateTimeBetween(self::faker()->dateTime(), self::faker()->dateTimeInInterval('+2 days')));
+        }
+
+        $startAt = $eventDay->setTime(9, 30);
+        $finishAt = $eventDay->add(new \DateInterval('P1D'))->setTime(18, 00);
+
+        return $this->addState(['startAt' => $startAt, 'finishAt' => $finishAt]);
+    }
+
     public static function getClass(): string
     {
         return Event::class;
