@@ -99,7 +99,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
         $message = MessageBuilder::new()->addEmbed($embed);
 
         if (0 === \count($passengers = iterator_to_array($transport->getPassengers()))) {
-            $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.no_traveler'))->setComponents([])->setEmbeds([]));
+            $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.error.no_traveler'))->setComponents([])->setEmbeds([]));
 
             return;
         }
