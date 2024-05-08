@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace Afup\Hermes\Repository\Transport;
 
 use Afup\Hermes\Entity\Event;
+use Afup\Hermes\Entity\Transport;
 use Afup\Hermes\Entity\User;
-use Afup\Hermes\Enum\Direction;
 use Doctrine\ORM\EntityManagerInterface;
 
-final readonly class UserCanCreateTransport
+final readonly class UserCanJoinTransport
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
     ) {
     }
 
-    public function __invoke(Event $event, User $user, Direction $direction, \DateTimeImmutable $date): bool
+    public function __invoke(Event $event, User $user, Transport $transport): bool
     {
         // possible use-cases:
         // - AFUP Day, Nantes > Lyon (one ride to go to the event, one to get back)
@@ -37,8 +37,8 @@ SQL;
         $statement = $connection->prepare($sql);
         $statement->bindValue('eventId', $event->id);
         $statement->bindValue('userId', $user->id);
-        $statement->bindValue('direction', $direction->value);
-        $statement->bindValue('date', $date->format('Y-m-d H:i:s'));
+        $statement->bindValue('direction', $transport->direction->value);
+        $statement->bindValue('date', $transport->startAt->format('Y-m-d H:i:s'));
         $result = $statement->executeQuery();
         /** @var false|int $transportId */
         $transportId = $result->fetchOne();

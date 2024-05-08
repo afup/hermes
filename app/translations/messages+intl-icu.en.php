@@ -56,7 +56,7 @@ return [
             'created' => '✅ Transport `{transport_id}` created.',
             'error' => [
                 'invalid_date' => '🕐 Date-time passed has invalid format, please use following format for date: YYYY-MM-DD, and for time: HH:MM',
-                'same_configuration' => '⛔ You already have created a transport with the same configuration, you can\'t have more than one transport per day and per direction.',
+                'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can\'t have more than one transport per day and per direction.',
             ],
         ],
         'drop_traveler_from_transport' => [
@@ -86,6 +86,8 @@ return [
             'validation_driver' => 'A new co-traveler joined your transport {direction} (at {date}), they’ll be in touch with you or you can send them a DM: <@{traveler_id}>',
             'error' => [
                 'no_transport' => '⁉️ Could not find a transport for current channel event.',
+                'created_transport' => '❌ You cannot join a transport you created.',
+                'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can\'t have more than one transport per day and per direction.',
             ],
         ],
         'quit_transport' => [

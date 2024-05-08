@@ -9,6 +9,7 @@ use Afup\Hermes\Discord\Command\Helper\OptionHelper;
 use Afup\Hermes\Discord\Command\Helper\UserHelper;
 use Afup\Hermes\Entity\Traveler;
 use Afup\Hermes\Enum\Direction;
+use Afup\Hermes\Enum\Traveler as TravelerType;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Traveler\GetTravelerListForUserAndEvent;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
@@ -59,7 +60,7 @@ final readonly class QuitTransportCommand implements CommandInterface
             }
             $user = $this->getUserForInteraction($interaction);
 
-            $travelers = ($this->getTravelerListForUserAndEvent)($user, $event);
+            $travelers = ($this->getTravelerListForUserAndEvent)($user, $event, TravelerType::PASSENGER);
             if (0 === \count($travelers)) {
                 $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.quit_transport.error.no_transport')), true);
 

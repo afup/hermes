@@ -12,6 +12,7 @@ use Afup\Hermes\Enum\Direction;
 use Afup\Hermes\Enum\Traveler as TravelerType;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Transport\GetTransportForEvent;
+use Afup\Hermes\Repository\Transport\UserCanJoinTransport;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
 use Discord\Builders\CommandBuilder;
 use Discord\Builders\MessageBuilder;
@@ -35,6 +36,7 @@ final readonly class JoinTransportCommand implements CommandInterface
         private FindOrCreateUser $findOrCreateUser,
         private FindEventByChannel $findEventByChannel,
         private GetTransportForEvent $getTransportForEvent,
+        private UserCanJoinTransport $userCanJoinTransport,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -70,6 +72,18 @@ final readonly class JoinTransportCommand implements CommandInterface
             $transport = ($this->getTransportForEvent)($event, $transportId);
             if (null === $transport) {
                 $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.no_transport')), true);
+
+                return;
+            }
+
+            if ($user->userId === $transport->getDriver()->userId) {
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.created_transport')), true);
+
+                return;
+            }
+
+            if (!($this->userCanJoinTransport)($event, $user, $transport)) {
+                $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.same_configuration'))->setComponents([])->setEmbeds([]));
 
                 return;
             }
