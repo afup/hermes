@@ -1,3 +1,7 @@
+###> clever-cloud ###
+.clever.json
+###< clever-cloud ###
+
 ###> symfony/framework-bundle ###
 .env.local
 .env.local.php
