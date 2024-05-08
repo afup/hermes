@@ -79,7 +79,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
                     $chooseAction = ActionRow::new();
 
                     foreach ($transportRow as $transport) {
-                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.transport_button', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $transport->startAt->format('H\hi \o\n j F Y')]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.transport_button', ['direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y')]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $transport): void {
                             $this->chooseTravelerToDrop($discord, $interaction, $transport);
                         }, $discord));
                     }
@@ -138,7 +138,7 @@ final readonly class DropTravelerFromTransportCommand implements CommandInterfac
                 $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.confirm_label'))->setComponents([])->setEmbeds([]));
                 $discord->users->fetch((string) $travelerUser->userId)->then(function (User $user) use ($transport) {
                     $direction = $this->translator->trans(Direction::EVENT === $transport->direction ? 'enum.event_with_postal_code' : 'enum.home_with_postal_code', ['postal_code' => $transport->postalCode]);
-                    $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.dropped_traveler_dm', ['direction' => $direction, 'date' => $transport->startAt->format('H\hi \o\n j F Y'), 'event_channel' => $transport->event->channelId])));
+                    $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.drop_traveler_from_transport.dropped_traveler_dm', ['direction' => $direction, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'event_channel' => $transport->event->channelId])));
                 });
             }, $discord))
             ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.drop_traveler_from_transport.cancel_button'))->setEmoji('❌')->setListener(function (Interaction $interaction): void {

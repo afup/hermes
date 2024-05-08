@@ -97,7 +97,7 @@ final readonly class JoinTransportCommand implements CommandInterface
             $interaction->user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.validation_dm', ['driver_id' => $transportDriver->userId])));
             $discord->users->fetch((string) $transportDriver->userId)->then(function (User $user) use ($transport, $interaction) {
                 $direction = $this->translator->trans(Direction::EVENT === $transport->direction ? 'enum.event_with_postal_code' : 'enum.home_with_postal_code', ['postal_code' => $transport->postalCode]);
-                $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.validation_driver', ['direction' => $direction, 'date' => $transport->startAt->format('H\hi \o\n j F Y'), 'traveler_id' => $interaction->user->id])));
+                $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.validation_driver', ['direction' => $direction, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'traveler_id' => $interaction->user->id])));
             });
         });
     }

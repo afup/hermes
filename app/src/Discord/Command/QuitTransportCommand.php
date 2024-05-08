@@ -80,7 +80,7 @@ final readonly class QuitTransportCommand implements CommandInterface
                     $chooseAction = ActionRow::new();
 
                     foreach ($travelerRow as $traveler) {
-                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.quit_transport.choice_button', ['direction' => Direction::EVENT === $traveler->transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'date' => $traveler->transport->startAt->format('H\hi \o\n j F Y')]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $traveler): void {
+                        $chooseAction->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.quit_transport.choice_button', ['direction' => Direction::EVENT === $traveler->transport->direction ? $this->translator->trans('enum.event') : $this->translator->trans('enum.home'), 'hour' => $traveler->transport->startAt->format('H\hi'), 'date' => $traveler->transport->startAt->format('j F Y')]))->setEmoji('🚗')->setListener(function (Interaction $interaction) use ($discord, $traveler): void {
                             $this->validateRemoval($discord, $interaction, $traveler);
                         }, $discord));
                     }
@@ -107,7 +107,7 @@ final readonly class QuitTransportCommand implements CommandInterface
                 $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.quit_transport.confirm_label'))->setComponents([])->setEmbeds([]));
                 $discord->users->fetch((string) $transport->getDriver()->userId)->then(function (User $user) use ($transport) {
                     $direction = $this->translator->trans(Direction::EVENT === $transport->direction ? 'enum.event_with_postal_code' : 'enum.home_with_postal_code', ['postal_code' => $transport->postalCode]);
-                    $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.quit_transport.driver_dm', ['direction' => $direction, 'date' => $transport->startAt->format('H\hi \o\n j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats])));
+                    $user->sendMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.quit_transport.driver_dm', ['direction' => $direction, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats])));
                 });
             }, $discord))
             ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.quit_transport.cancel_button'))->setEmoji('❌')->setListener(function (Interaction $interaction): void {
