@@ -89,6 +89,7 @@ return [
                 'no_transport' => '⛔ Vous n’avez aucun transport créé pour l’événement de ce canal.',
                 'created_transport' => '❌ Vous ne pouvez pas rejoindre un transport que vous avez créé.',
                 'same_configuration' => '⛔ Vous avez déjà créé ou rejoint un transport avec la même configuration, vous ne pouvez avoir qu’un seul transport par jour par direction.',
+                'transport_full' => '👤 Vous ne pouvez pas rejoindre ce transport car il est complet 😔 Essayez-en un autre !',
             ],
         ],
         'quit_transport' => [

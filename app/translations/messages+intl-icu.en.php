@@ -89,6 +89,7 @@ return [
                 'no_transport' => '⛔ Could not find a transport for current channel event.',
                 'created_transport' => '❌ You cannot join a transport you created.',
                 'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can’t have more than one transport per day and per direction.',
+                'transport_full' => '👤 You cannot join this transport because its full 😔 Try another one !',
             ],
         ],
         'quit_transport' => [

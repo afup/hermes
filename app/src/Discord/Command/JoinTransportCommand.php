@@ -88,6 +88,12 @@ final readonly class JoinTransportCommand implements CommandInterface
                 return;
             }
 
+            if ($transport->seats === $transport->travelers->count()) {
+                $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.transport_full'))->setComponents([])->setEmbeds([]));
+
+                return;
+            }
+
             $traveler = new Traveler($transport, $user, TravelerType::PASSENGER);
             $this->entityManager->persist($traveler);
             $this->entityManager->flush();
