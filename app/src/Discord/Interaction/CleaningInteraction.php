@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Afup\Hermes\Discord\Interaction;
 
-use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\WebSockets\Event;
