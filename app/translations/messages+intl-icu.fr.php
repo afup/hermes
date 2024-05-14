@@ -56,6 +56,7 @@ return [
             'created' => '✅ Transport `{transport_id}` crée.',
             'error' => [
                 'invalid_date' => '🕐 La date et/ou l’heure donnée(s) n’utilise pas un format valide, merci d’utiliser le format suivant pour la date: YYYY-MM-DD, et celui-ci pour l’heure: HH:MM',
+                'too_far_date' => '🕐 La date donnée est trop éloignée de l’événement, vous ne pouvez créer un transport que 2 jours avant lorsque vous vous rendez à l’événement ou 2 jours après lorsque vous revenez de l’événement. L’événement est prévu pour commencer le {date_start} et se terminer le {date_end}.',
                 'same_configuration' => '⛔ Vous avez déjà créé ou rejoint un transport avec la même configuration, vous ne pouvez avoir qu’un seul transport par jour par direction.',
             ],
         ],

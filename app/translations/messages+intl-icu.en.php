@@ -56,6 +56,7 @@ return [
             'created' => '✅ Transport `{transport_id}` created.',
             'error' => [
                 'invalid_date' => '🕐 Date-time passed has invalid format, please use following format for date: YYYY-MM-DD, and for time: HH:MM',
+                'too_far_date' => '🕐 Date-time passed is too far away from the event, you can only create transport 2 days before when going to the event or 2 days after when coming back from the event. Event is planned to start on {date_start} and finish on {date_end}.',
                 'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can’t have more than one transport per day and per direction.',
             ],
         ],

@@ -22,7 +22,7 @@ function appRegister(): void
 function appStart(): void
 {
     io()->note('Starting bot');
-    run('bin/console hermes:bot', workingDirectory: 'app/');
+    run('bin/console hermes:bot -vvv', workingDirectory: 'app/');
 }
 
 #[AsTask(name: 'tests', namespace: 'hermes', description: 'Test the bot')]
