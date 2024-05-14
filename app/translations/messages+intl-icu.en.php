@@ -48,7 +48,7 @@ return [
             'description' => 'Create a new transport for the event',
             'option' => [
                 'passenger_seats' => 'Number of seats available for other travelers',
-                'postal_code' => 'Postal code you\'re coming from on your way to the event or you\'re going back to',
+                'postal_code' => 'Postal code you’re coming from on your way to the event or you’re going back to',
                 'when_date' => 'The day of your transport (format: YYYY-MM-DD)',
                 'when_time' => 'The time of your transport (format: HH:MM)',
             ],
@@ -56,7 +56,7 @@ return [
             'created' => '✅ Transport `{transport_id}` created.',
             'error' => [
                 'invalid_date' => '🕐 Date-time passed has invalid format, please use following format for date: YYYY-MM-DD, and for time: HH:MM',
-                'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can\'t have more than one transport per day and per direction.',
+                'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can’t have more than one transport per day and per direction.',
             ],
         ],
         'drop_traveler_from_transport' => [
@@ -72,7 +72,7 @@ return [
             'cancel_button' => 'Cancel',
             'cancel_label' => '❌ Ignoring removal request.',
             'error' => [
-                'no_transport' => '⛔ You have no transport(s) created for current channel\'s event.',
+                'no_transport' => '⛔ You have no transport(s) created for current channel’s event.',
                 'no_traveler' => 'You have no travelers for this transport.',
             ],
         ],
@@ -87,7 +87,7 @@ return [
             'error' => [
                 'no_transport' => '⛔ Could not find a transport for current channel event.',
                 'created_transport' => '❌ You cannot join a transport you created.',
-                'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can\'t have more than one transport per day and per direction.',
+                'same_configuration' => '⛔ You already have created or joined a transport with the same configuration, you can’t have more than one transport per day and per direction.',
             ],
         ],
         'quit_transport' => [
@@ -101,7 +101,7 @@ return [
             'cancel_button' => 'Cancel',
             'cancel_label' => '❌ Ignoring removal request.',
             'error' => [
-                'no_transport' => '⛔ You have did not joined any transport for current channel\'s event.',
+                'no_transport' => '⛔ You have did not joined any transport for current channel’s event.',
             ],
         ],
         'remove_transport' => [
@@ -115,21 +115,21 @@ return [
             'label_cancel' => '❌ Ignoring removal request.',
             'removal_dm' => 'The transport {direction} at {hour} on {date} was cancelled. You can still find a new one: <#{event_channel}> using `/search`',
             'error' => [
-                'no_transport' => '⛔ You have no transport(s) created for current channel\'s event.',
+                'no_transport' => '⛔ You have no transport(s) created for current channel’s event.',
             ],
         ],
         'search' => [
             'description' => 'Search a transport for a given postal code',
             'option' => [
-                'postal_code' => 'Postal code you\'re coming from on your way to the event or you\'re going back to', // (it can be from 2 to 5 characters: 44 or 44430)
-                'direction' => 'If you\'re going to the event or coming back from it',
+                'postal_code' => 'Postal code you’re coming from on your way to the event or you’re going back to', // (it can be from 2 to 5 characters: 44 or 44430)
+                'direction' => 'If you’re going to the event or coming back from it',
             ],
             'intro' => 'Transports found:',
             'row' => '- [`{transport_id}`] {direction} {postal_code} leaving at {hour} on {date} - {seats_remaining}/{seats_total} passenger seats available',
             'empty' => 'No transport found.',
         ],
         'status' => [
-            'description' => 'List the transport(s) you\'ve created or joined',
+            'description' => 'List the transport(s) you’ve created or joined',
             'intro' => 'Your status for "{name}" event:',
             'row' => '- [{traveler_type}] Leaving at {hour} on {date} from {postal_code}',
             'row_not_driver' => ' (transported by <@{driver_id}>)',
