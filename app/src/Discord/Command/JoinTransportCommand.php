@@ -83,13 +83,13 @@ final readonly class JoinTransportCommand implements CommandInterface
             }
 
             if (!($this->userCanJoinTransport)($event, $user, $transport)) {
-                $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.same_configuration'))->setComponents([])->setEmbeds([]));
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.same_configuration')), true);
 
                 return;
             }
 
             if ($transport->seats === $transport->travelers->count()) {
-                $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.transport_full'))->setComponents([])->setEmbeds([]));
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.transport_full')), true);
 
                 return;
             }
