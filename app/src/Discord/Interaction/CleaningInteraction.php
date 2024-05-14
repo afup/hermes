@@ -27,7 +27,7 @@ final readonly class CleaningInteraction implements InteractionInterface
                 return; // user is admin, let him post
             }
 
-            $message->reply(MessageBuilder::new()->setContent(sprintf('Author: %s // Admins: %s', $message->author->id, json_encode($this->adminUserIds))));
+            $message->delete();
         });
     }
 }
