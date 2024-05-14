@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Afup\Hermes\Discord\Interaction;
 
+use Discord\Builders\MessageBuilder;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\WebSockets\Event;
 
-final class CleaningInteraction implements InteractionInterface
+final readonly class CleaningInteraction implements InteractionInterface
 {
     public function __construct(
         private array $adminUserIds,
@@ -26,7 +27,7 @@ final class CleaningInteraction implements InteractionInterface
                 return; // user is admin, let him post
             }
 
-            $message->delete();
+            $message->reply(MessageBuilder::new()->setContent(sprintf('Author: %s // Admins: %s', $message->author->id, json_encode($this->adminUserIds))));
         });
     }
 }
