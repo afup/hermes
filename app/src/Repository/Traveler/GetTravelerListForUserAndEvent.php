@@ -28,7 +28,6 @@ FROM transport tp
 INNER JOIN traveler tv ON tp.id = tv.transport_id
 WHERE tv.user_id = :userId
 AND tp.event_id = :eventId
-AND tv.type = 'passenger'
 SQL;
 
         if (null !== $type) {
