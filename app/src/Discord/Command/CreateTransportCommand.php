@@ -137,7 +137,7 @@ final readonly class CreateTransportCommand implements CommandInterface
     private function createTransport(Interaction $interaction, Event $event, User $user, int $seats, string $postalCode, \DateTimeImmutable $when, Direction $direction): void
     {
         if (!$this->checkTransportDateIsValid($when, $event, $direction)) {
-            $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.too_far_date', ['date_start' => $event->startAt->format('j F Y'), 'date_end' => $event->finishAt->format('j F Y')])), true);
+            $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.too_far_date', ['date_start' => $event->startAt->format('j F Y'), 'date_end' => $event->finishAt->format('j F Y')])), true);
 
             return;
         }
