@@ -6,6 +6,7 @@ namespace Afup\Hermes\Command;
 
 use Afup\Hermes\Discord\Command\CommandInterface;
 use Afup\Hermes\Discord\Discord;
+use Afup\Hermes\Discord\Interaction\InteractionInterface;
 use Discord\Discord as Client;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -23,6 +24,9 @@ final class BotCommand extends Command
         /** @var CommandInterface[] $commands */
         #[TaggedIterator(CommandInterface::class)]
         private readonly iterable $commands,
+        /** @var InteractionInterface[] $interactions */
+        #[TaggedIterator(InteractionInterface::class)]
+        private readonly iterable $interactions,
         private readonly Discord $discord,
     ) {
         parent::__construct();
@@ -32,6 +36,10 @@ final class BotCommand extends Command
     {
         $this->discord->on('init', function (Client $discord) {
             foreach ($this->commands as $command) {
+                $command->callback($discord);
+            }
+
+            foreach ($this->interactions as $command) {
                 $command->callback($discord);
             }
         });
