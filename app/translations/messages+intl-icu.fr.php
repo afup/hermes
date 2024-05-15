@@ -135,7 +135,7 @@ return [
             'intro' => 'Votre statut pour l’événement "{name}":',
             'row' => '- [{traveler_type}] Part à {hour} le {date} depuis {postal_code}',
             'row_not_driver' => ' (conduit par <@{driver_id}>)',
-            'row_driver' => ' ({seats_remaining}/{seats_total} places disponibles)',
+            'row_driver' => ' ({seats_remaining}/{seats_total} places disponibles, dont {travelers})',
             'empty' => 'Vous n’êtes enregistré·e dans aucun transport pour l’événement "{name}".',
         ],
     ],
