@@ -106,6 +106,7 @@ final class EventCommand extends Command
         );
         $this->entityManager->persist($event);
         $this->entityManager->flush();
+        $this->entityManager->clear();
         $io->success($this->translator->trans('command.create_event.created', ['name' => $eventName]));
 
         return Command::SUCCESS;

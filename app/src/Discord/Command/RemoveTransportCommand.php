@@ -113,6 +113,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
                     ->then(function () use ($transport) {
                         $this->entityManager->remove($transport);
                         $this->entityManager->flush();
+                        $this->entityManager->clear();
                     });
             }, $discord))
             ->addComponent(Button::new(Button::STYLE_SECONDARY)->setLabel($this->translator->trans('discord.remove_transport.button_cancel'))->setEmoji('❌')->setListener(function (Interaction $interaction): void {

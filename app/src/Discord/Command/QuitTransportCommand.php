@@ -103,6 +103,7 @@ final readonly class QuitTransportCommand implements CommandInterface
                 $transport = $traveler->transport;
                 $this->entityManager->remove($traveler);
                 $this->entityManager->flush();
+                $this->entityManager->clear();
 
                 $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.quit_transport.confirm_label'))->setComponents([])->setEmbeds([]));
                 $discord->users->fetch((string) $transport->getDriver()->userId)->then(function (User $user) use ($transport) {

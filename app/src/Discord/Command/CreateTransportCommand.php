@@ -137,7 +137,7 @@ final readonly class CreateTransportCommand implements CommandInterface
     private function createTransport(Interaction $interaction, Event $event, User $user, int $seats, string $postalCode, \DateTimeImmutable $when, Direction $direction): void
     {
         if (!$this->checkTransportDateIsValid($when, $event, $direction)) {
-            $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.too_far_date', ['date_start' => $event->startAt->format('j F Y'), 'date_end' => $event->finishAt->format('j F Y')])), true);
+            $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.error.too_far_date', ['date_start' => $event->startAt->format('j F Y'), 'date_end' => $event->finishAt->format('j F Y')])));
 
             return;
         }
@@ -154,6 +154,7 @@ final readonly class CreateTransportCommand implements CommandInterface
         $this->entityManager->persist($transport);
         $this->entityManager->persist($traveler);
         $this->entityManager->flush();
+        $this->entityManager->clear();
 
         $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.create_transport.created', ['transport_id' => $transport->shortId]))->setComponents([])->setEmbeds([]));
     }

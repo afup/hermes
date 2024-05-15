@@ -24,6 +24,7 @@ final readonly class FindOrCreateUser
             $user = new User($userId);
             $this->entityManager->persist($user);
             $this->entityManager->flush();
+            $this->entityManager->clear();
         }
 
         return $user;

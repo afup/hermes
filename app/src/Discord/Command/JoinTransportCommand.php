@@ -97,6 +97,7 @@ final readonly class JoinTransportCommand implements CommandInterface
             $traveler = new Traveler($transport, $user, TravelerType::PASSENGER);
             $this->entityManager->persist($traveler);
             $this->entityManager->flush();
+            $this->entityManager->clear();
 
             $transportDriver = $transport->getDriver();
             $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.validation_direct', ['transport_id' => $transport->shortId])), true);

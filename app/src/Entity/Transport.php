@@ -28,7 +28,7 @@ class Transport
     public string $shortId;
 
     /** @var Collection<int, Traveler> */
-    #[ORM\OneToMany(targetEntity: Traveler::class, mappedBy: 'transport', cascade: ['remove'], fetch: 'EAGER')]
+    #[ORM\OneToMany(targetEntity: Traveler::class, mappedBy: 'transport', cascade: ['remove'])]
     #[ORM\JoinColumn(nullable: false)]
     public Collection $travelers;
 
