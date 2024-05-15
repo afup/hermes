@@ -128,6 +128,7 @@ return [
             ],
             'intro' => 'Transports found:',
             'row' => '- [`{transport_id}`] {direction} {postal_code} leaving at {hour} on {date} - {seats_remaining}/{seats_total} passenger seats available',
+            'row_driver' => '(you are driving this transport)',
             'empty' => 'No transport found.',
         ],
         'status' => [

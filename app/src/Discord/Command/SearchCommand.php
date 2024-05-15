@@ -81,7 +81,11 @@ final readonly class SearchCommand implements CommandInterface
 
             $content = $this->translator->trans('discord.search.intro') . "\n";
             foreach ($transports as $transport) {
-                $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? 'From' : 'To', 'postal_code' => $transport->postalCode, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]) . "\n";
+                $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? 'From' : 'To', 'postal_code' => $transport->postalCode, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]);
+                if ((string) $transport->getDriver()->userId === $interaction->user->id) {
+                    $content .= $this->translator->trans('discord.search.row_driver');
+                }
+                $content .= "\n";
             }
 
             $interaction->respondWithMessage(MessageBuilder::new()->setContent($content), true);
