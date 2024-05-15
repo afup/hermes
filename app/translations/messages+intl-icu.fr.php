@@ -136,6 +136,7 @@ return [
             'row' => '- [{traveler_type}] Part à {hour} le {date} depuis {postal_code}',
             'row_not_driver' => ' (conduit par <@{driver_id}>)',
             'row_driver' => ' ({seats_remaining}/{seats_total} places disponibles, dont {travelers})',
+            'row_driver_no_passengers' => ' ({seats_remaining}/{seats_total} places disponibles)',
             'empty' => 'Vous n’êtes enregistré·e dans aucun transport pour l’événement "{name}".',
         ],
     ],

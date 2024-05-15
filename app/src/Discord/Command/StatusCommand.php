@@ -59,11 +59,20 @@ final readonly class StatusCommand implements CommandInterface
                     $status .= $this->translator->trans('discord.status.row_not_driver', ['driver_id' => $traveler->transport->getDriver()->userId]);
                 } else {
                     $sharedWith = [];
+                    $passengerCount = 0;
                     foreach ($traveler->transport->getPassengers() as $passenger) {
                         $sharedWith[] = sprintf('<@%d>', $passenger->user->userId);
+                        ++$passengerCount;
                     }
 
-                    $status .= $this->translator->trans('discord.status.row_driver', ['seats_remaining' => $traveler->transport->availableSeats(), 'seats_total' => $traveler->transport->seats, 'travelers' => implode(', ', $sharedWith)]);
+                    $translationKey = 'discord.status.row_driver_no_passengers';
+                    $translationData = ['seats_remaining' => $traveler->transport->availableSeats(), 'seats_total' => $traveler->transport->seats];
+                    if ($passengerCount > 0) {
+                        $translationKey = 'discord.status.row_driver';
+                        $translationData['travelers'] = implode(', ', $sharedWith);
+                    }
+
+                    $status .= $this->translator->trans($translationKey, $translationData);
                 }
 
                 $content .= $status . "\n";
