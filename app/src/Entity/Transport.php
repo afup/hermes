@@ -50,7 +50,7 @@ class Transport
         public readonly \DateTimeImmutable $startAt,
     ) {
         $this->travelers = new ArrayCollection();
-        $this->shortId = Shortid::generate(5)->serialize();
+        $this->shortId = Shortid::generate(5, readable: true)->serialize();
     }
 
     public function getDriver(): User
