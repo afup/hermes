@@ -73,13 +73,7 @@ final readonly class SearchCommand implements CommandInterface
             $direction = Direction::tryFrom($directionString);
 
             $transports = ($this->searchTransport)($event, $postalCode, $direction);
-            if (0 === \count($transports)) {
-                $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.search.empty')), true);
-
-                return;
-            }
-
-            $fullTransports = 0;
+            $fullTransports = $showedTransports = 0;
             $content = $this->translator->trans('discord.search.intro') . "\n";
             foreach ($transports as $transport) {
                 if ($transport->isFull()) {
@@ -92,8 +86,12 @@ final readonly class SearchCommand implements CommandInterface
                     $content .= $this->translator->trans('discord.search.row_driver');
                 }
                 $content .= "\n";
+                ++$showedTransports;
             }
 
+            if (0 === $showedTransports) { // if all transports are full or no transports are found for given postal code
+                $content = $this->translator->trans('discord.search.empty') . "\n";
+            }
             if ($fullTransports > 0) {
                 $content .= $this->translator->trans('discord.search.full_transports', ['count' => $fullTransports]);
             }
