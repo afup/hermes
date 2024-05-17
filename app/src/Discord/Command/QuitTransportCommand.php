@@ -13,6 +13,7 @@ use Afup\Hermes\Enum\Traveler as TravelerType;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Traveler\GetTravelerListForUserAndEvent;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
+use Afup\Hermes\Repository\User\FindOrCreateUserDebug;
 use Discord\Builders\CommandBuilder;
 use Discord\Builders\Components\ActionRow;
 use Discord\Builders\Components\Button;
@@ -69,7 +70,7 @@ final readonly class QuitTransportCommand implements CommandInterface
             }
 
             if (1 === \count($travelers)) {
-                $this->validateRemoval($discord, $interaction, $travelers[0]);
+                $this->validateRemoval($discord, $interaction, $travelers[0], true);
             } else {
                 $embed = new Embed($discord);
                 $embed->setTitle($this->translator->trans('discord.quit_transport.travel_choice'));
@@ -94,7 +95,7 @@ final readonly class QuitTransportCommand implements CommandInterface
         });
     }
 
-    private function validateRemoval(Discord $discord, Interaction $interaction, Traveler $traveler): void
+    private function validateRemoval(Discord $discord, Interaction $interaction, Traveler $traveler, bool $shouldRespond = false): void
     {
         $embed = new Embed($discord);
         $embed->setTitle($this->translator->trans('discord.quit_transport.confirmation'));
@@ -116,6 +117,11 @@ final readonly class QuitTransportCommand implements CommandInterface
                 $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.quit_transport.cancel_label'))->setComponents([])->setEmbeds([]));
             }, $discord));
 
-        $interaction->updateMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation));
+        if ($shouldRespond) {
+            $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
+        } else {
+            $interaction->updateMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation));
+        }
+
     }
 }

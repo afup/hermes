@@ -66,7 +66,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
             }
 
             if (1 === \count($transports)) {
-                $this->validateRemoval($discord, $interaction, $transports[0]);
+                $this->validateRemoval($discord, $interaction, $transports[0], true);
             } else {
                 $embed = new Embed($discord);
                 $embed->setTitle($this->translator->trans('discord.remove_transport.ask_remove'));
@@ -91,7 +91,7 @@ final readonly class RemoveTransportCommand implements CommandInterface
         });
     }
 
-    private function validateRemoval(Discord $discord, Interaction $interaction, Transport $transport): void
+    private function validateRemoval(Discord $discord, Interaction $interaction, Transport $transport, bool $shouldRespond = false): void
     {
         $embed = new Embed($discord);
         $embed->setTitle($this->translator->trans('discord.remove_transport.validation_remove'));
@@ -120,6 +120,10 @@ final readonly class RemoveTransportCommand implements CommandInterface
                 $interaction->updateMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.remove_transport.label_cancel'))->setComponents([])->setEmbeds([]));
             }, $discord));
 
-        $interaction->updateMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation));
+        if ($shouldRespond) {
+            $interaction->respondWithMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation), true);
+        } else {
+            $interaction->updateMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation));
+        }
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Afup\Hermes\Repository\User;
 
 use Afup\Hermes\Entity\User;
+use Discord\Builders\MessageBuilder;
+use Discord\Parts\Interactions\Interaction;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class FindOrCreateUser

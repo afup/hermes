@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Afup\Hermes\Discord\Command\Helper;
 
 use Afup\Hermes\Entity\User;
+use Afup\Hermes\Repository\User\FindOrCreateUserDebug;
+use Discord\Builders\MessageBuilder;
 use Discord\Parts\Interactions\Interaction;
 use Discord\Parts\User\User as DiscordUser;
 
