@@ -58,15 +58,19 @@ final readonly class QuitTransportCommand implements CommandInterface
             if (false === ($event = $this->getEventForInteraction($interaction))) {
                 return;
             }
+
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent('A'));
             $user = $this->getUserForInteraction($interaction);
 
             $travelers = ($this->getTravelerListForUserAndEvent)($user, $event, TravelerType::PASSENGER);
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent('B'));
             if (0 === \count($travelers)) {
                 $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.quit_transport.error.no_transport')), true);
 
                 return;
             }
 
+            $interaction->respondWithMessage(MessageBuilder::new()->setContent('C'));
             if (1 === \count($travelers)) {
                 $this->validateRemoval($discord, $interaction, $travelers[0]);
             } else {
@@ -88,6 +92,7 @@ final readonly class QuitTransportCommand implements CommandInterface
                     $message->addComponent($chooseAction);
                 }
 
+                $interaction->respondWithMessage(MessageBuilder::new()->setContent('D'));
                 $interaction->respondWithMessage($message, true);
             }
         });
@@ -95,6 +100,7 @@ final readonly class QuitTransportCommand implements CommandInterface
 
     private function validateRemoval(Discord $discord, Interaction $interaction, Traveler $traveler): void
     {
+        $interaction->respondWithMessage(MessageBuilder::new()->setContent('E'));
         $embed = new Embed($discord);
         $embed->setTitle($this->translator->trans('discord.quit_transport.confirmation'));
 
