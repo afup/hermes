@@ -63,6 +63,11 @@ class Transport
         return $driver->user;
     }
 
+    public function isFull(): bool
+    {
+        return $this->seats === \count(iterator_to_array($this->getPassengers()));
+    }
+
     /**
      * @return \Generator<Traveler>
      */

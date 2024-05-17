@@ -130,6 +130,7 @@ return [
             'row' => '- [`{transport_id}`] {direction} {postal_code} leaving at {hour} on {date} - {seats_remaining}/{seats_total} passenger seats available',
             'row_driver' => '(you are driving this transport)',
             'empty' => 'No transport found.',
+            'full_transports' => 'And {count} full transports.',
         ],
         'status' => [
             'description' => 'List the transport(s) you’ve created or joined',

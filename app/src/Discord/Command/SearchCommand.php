@@ -79,13 +79,23 @@ final readonly class SearchCommand implements CommandInterface
                 return;
             }
 
+            $fullTransports = 0;
             $content = $this->translator->trans('discord.search.intro') . "\n";
             foreach ($transports as $transport) {
+                if ($transport->isFull()) {
+                    ++$fullTransports;
+                    continue;
+                }
+
                 $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? 'From' : 'To', 'postal_code' => $transport->postalCode, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]);
                 if ((string) $transport->getDriver()->userId === $interaction->user->id) {
                     $content .= $this->translator->trans('discord.search.row_driver');
                 }
                 $content .= "\n";
+            }
+
+            if ($fullTransports > 0) {
+                $content .= $this->translator->trans('discord.search.full_transports', ['count' => $fullTransports]);
             }
 
             $interaction->respondWithMessage(MessageBuilder::new()->setContent($content), true);

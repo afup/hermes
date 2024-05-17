@@ -88,7 +88,7 @@ final readonly class JoinTransportCommand implements CommandInterface
                 return;
             }
 
-            if ($transport->seats === \count(iterator_to_array($transport->getPassengers()))) {
+            if ($transport->isFull()) {
                 $interaction->respondWithMessage(MessageBuilder::new()->setContent($this->translator->trans('discord.join_transport.error.transport_full')), true);
 
                 return;
