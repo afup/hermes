@@ -138,7 +138,7 @@ return [
         'status' => [
             'description' => 'Liste des transports que vous avez créés ou rejoints',
             'intro' => 'Votre statut pour l’événement "{name}":',
-            'row' => '- [{traveler_type}] Part à {hour} le {date} depuis {postal_code}',
+            'row' => '- [`{transport_id}` {traveler_type}] Part à {hour} le {date} depuis {postal_code}',
             'row_not_driver' => ' (conduit par <@{driver_id}>)',
             'row_driver' => ' ({seats_remaining}/{seats_total} places disponibles, dont {travelers})',
             'row_driver_no_passengers' => ' ({seats_remaining}/{seats_total} places disponibles)',

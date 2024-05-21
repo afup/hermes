@@ -13,7 +13,6 @@ use Afup\Hermes\Enum\Traveler as TravelerType;
 use Afup\Hermes\Repository\Event\FindEventByChannel;
 use Afup\Hermes\Repository\Traveler\GetTravelerListForUserAndEvent;
 use Afup\Hermes\Repository\User\FindOrCreateUser;
-use Afup\Hermes\Repository\User\FindOrCreateUserDebug;
 use Discord\Builders\CommandBuilder;
 use Discord\Builders\Components\ActionRow;
 use Discord\Builders\Components\Button;
@@ -122,6 +121,5 @@ final readonly class QuitTransportCommand implements CommandInterface
         } else {
             $interaction->updateMessage(MessageBuilder::new()->addEmbed($embed)->addComponent($validation));
         }
-
     }
 }
