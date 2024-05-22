@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 return [
     'enum' => [
+        'from' => 'From',
+        'to' => 'To',
         'event' => 'To the event',
         'event_with_postal_code' => 'from {postal_code} to the event',
         'home' => 'To my place',

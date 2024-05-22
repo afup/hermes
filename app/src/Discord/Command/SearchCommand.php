@@ -81,7 +81,7 @@ final readonly class SearchCommand implements CommandInterface
                     continue;
                 }
 
-                $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? 'From' : 'To', 'postal_code' => $transport->postalCode, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]);
+                $content .= $this->translator->trans('discord.search.row', ['transport_id' => $transport->shortId, 'direction' => Direction::EVENT === $transport->direction ? $this->translator->trans('enum.from') : $this->translator->trans('enum.to'), 'postal_code' => $transport->postalCode, 'hour' => $transport->startAt->format('H\hi'), 'date' => $transport->startAt->format('j F Y'), 'seats_remaining' => $transport->availableSeats(), 'seats_total' => $transport->seats]);
                 if ((string) $transport->getDriver()->userId === $interaction->user->id) {
                     $content .= $this->translator->trans('discord.search.row_driver');
                 }
